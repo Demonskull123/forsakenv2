@@ -1,0 +1,2180 @@
+-- outlaw.dev | Forsaken | merged build v1.2.0
+local u1 = loadstring(game:HttpGet("https://raw.githubusercontent.com/Footagesus/WindUI/main/dist/main.lua"))()
+
+-- ===== capability gate =====
+local CAP = {
+	hookmetamethod = (typeof(hookmetamethod) == "function" and hookmetamethod) or (typeof(hook_method) == "function" and hook_method) or nil,
+	hookfunction   = (typeof(hookfunction)   == "function" and hookfunction)   or (typeof(hook_function) == "function" and hook_function) or nil,
+	firesignal     = (typeof(firesignal)     == "function" and firesignal)     or (typeof(fire_signal) == "function" and fire_signal) or nil,
+	getgc          = (typeof(getgc)          == "function" and getgc)          or (typeof(get_gc) == "function" and get_gc) or nil,
+	setfenv        = (typeof(setfenv)        == "function" and setfenv)        or nil,
+	listfiles      = (typeof(listfiles)      == "function" and listfiles)      or nil,
+	isfolder       = (typeof(isfolder)       == "function" and isfolder)       or nil,
+	makefolder     = (typeof(makefolder)     == "function" and makefolder)     or nil,
+	readfile       = (typeof(readfile)       == "function" and readfile)       or nil,
+	writefile      = (typeof(writefile)      == "function" and writefile)      or nil,
+	checkcaller    = (typeof(checkcaller)    == "function" and checkcaller)    or (typeof(check_caller) == "function" and check_caller) or nil,
+	newcclosure    = (typeof(newcclosure)    == "function" and newcclosure)    or (typeof(new_cclosure) == "function" and new_cclosure) or nil,
+	require        = (typeof(require)        == "function" and require)        or nil,
+}
+local function capOK(...)
+	for _, name in ipairs({ ... }) do if not CAP[name] then return false end end
+	return true
+end
+local CAP_WARNED = {}
+local function capWarn(name, need)
+	if CAP_WARNED[name] then return end
+	CAP_WARNED[name] = true
+	pcall(function()
+		u1:Notify({ Title = "outlaw.dev", Content = name .. " needs: " .. table.concat(need, ", "), Duration = 6 })
+	end)
+end
+
+local t1 = {
+	autoBlockActive = false, antiStunActive = false, antiSlowActive = false,
+	killerAuraActive = false, slashAuraActive = false, autoFriedChicken = false,
+	infiniteStamina = false, noclip = false, infiniteJump = false,
+	killAllActive = false, killAllFly = false, killAllTeleport = false,
+	autoRagingPace = false, autoUnstableEye = false, autoPizzaDelivery = false,
+	auto404Error = false, autoClone = false, autoCoinFlip = false,
+	autoRepairActive = false, autoFarmGensActive = false, autoDoGensActive = false,
+	promptActivated = false, teleportedToGenerator = false, flying = false,
+	autoGetItemsActive = false, autoGetMedkitActive = false,
+	autoGetBloxyColaActive = false, itemAuraActive = false,
+	autoPickupActive = false, enableJumpingActive = false, antiSlownessActive = false,
+	disableJDTrails = false, disableJDFootprints = false, smallerSpikes = false,
+	disableNoliNPC = false, disable007n7NPC = false, hideInjury = false,
+	disableBlindness = false, extFOVActive = false, deleteRagdolls = false,
+	showChat = false, showPrivacy = false, autoPunchActive = false, controlDashActive = false,
+	invincibleActive = false, autoDisarmActive = false, autoEscapeActive = false,
+	betterVoidRush = false, overrideGridActive = false, gridSize = 6,
+	autoBlockGuestActive = false, animChangerActive = false, staminaPreset = "Original",
+	hostCrashActive = false, hostSkyGlitch = false, hostInstaKill = false,
+	hostNoDamage = false, hostNoCooldown = false, hostTargetPlayer = "None",
+	modDetected = false,
+}
+local t2 = { lastAuraUse = 0, lastFriedChickenTime = 0, lastCloneTime = 0,
+	lastCoinFlipTime = 0, lastEspUpdate = 0, teleportTime = 0 }
+local t3 = {
+	autoGenDelay = 2.5, auraRange = 15, auraCooldown = 1,
+	friedChickenThreshold = 50, friedChickenCooldown = 5, cloneCooldown = 10,
+	coinFlipCooldown = 5, repairCheckInterval = 1, teleportCooldown = 0.5,
+	killAllSpeed = 50, flySpeed = 50, espUpdateInterval = espUpdateInterval or 0.3,
+	itemAuraRange = 5, itemPickupCooldown = 1, highlightTransparency = 0.5,
+	highlightOutlineTransparency = 0, espTextSize = 14,
+}
+local u5 = data or {
+	autoGenDebounce = {}, repairDebounce = {}, skillCooldowns = {},
+	lastHealth = 0, currentTarget = nil, currentRepairGenerator = nil,
+	killerModel = nil, isSurvivor = false, isKiller = false,
+}
+local t4 = {
+	autoBlockConnection = nil, antiStunConnection = nil, antiSlowConnection = nil,
+	auraConnection = nil, friedChickenConnection = nil, staminaConnection = nil,
+	killAllConnection = nil, cloneConnection = nil, coinFlipConnection = nil,
+	autoRepairConnection = nil, autoFarmGensConnection = nil, autoDoGensConnection = nil,
+	flightConn = nil, bodyGyro = nil, bodyVel = nil, skillConnections = {},
+	autoGetItemsConnection = nil, autoGetMedkitConnection = nil,
+	autoGetBloxyColaConnection = nil, itemAuraConnection = nil,
+	autoPickupConnection = nil, antiSlownessConnection = nil,
+	enableJumpingConnection = nil, autoPunchConnection = nil,
+	invincibleHook = nil, undergroundState = false, autoEscapeConnection = nil,
+	gridOverrideHook = nil, guestBlockConnection = nil, animChangerConnection = nil,
+	staminaPresetConn = nil, azureHook = nil, hostLoops = {},
+}
+local u8 = espSettings or {
+	SurvivorsHighlight = false, KillerHighlight = false, ItemsHighlight = false,
+	GeneratorsHighlight = false, SurvivorsNameESP = false, KillerNameESP = false,
+	ItemsNameESP = false, GeneratorsNameESP = false, SurvivorsDistance = false,
+	KillerDistance = false, ItemsDistance = false, GeneratorsDistance = false,
+}
+local t6 = { survivors = {}, killers = {}, items = {}, generators = {} }
+local t7 = { survivors = {}, killers = {}, items = {}, generators = {} }
+local t8 = { Chance = false, Taph = false, Dusekkar = false, Guest1337 = false,
+	TwoTime = false, Elliot = false, Shedletsky = false, Noli = false,
+	OneXOne = false, C001kidd = false, JohnDoe = false, Slasher = false }
+local t9 = {
+	Chance = { abilities = { "Shoot" }, targetKiller = true },
+	Taph = { abilities = { "SubspaceTripmine" }, targetKiller = true },
+	Dusekkar = { abilities = { "PlasmaBeam", "SpawnProtection" }, targetKiller = { PlasmaBeam = true, SpawnProtection = false } },
+	Guest1337 = { abilities = { "Block", "Charge", "Punch" }, targetKiller = true },
+	TwoTime = { abilities = { "Dagger", "Ritual" }, targetKiller = true },
+	Elliot = { abilities = { "ThrowPizza" }, targetKiller = false },
+	Shedletsky = { abilities = { "Slash" }, targetKiller = true },
+	Noli = { abilities = { "Stab", "VoidRush", "Nova" }, targetKiller = false },
+	OneXOne = { abilities = { "Slash", "Entanglement", "MassInfection" }, targetKiller = false },
+	C001kidd = { abilities = { "Punch", "CorruptNature", "WalkspeedOverride" }, targetKiller = false },
+	JohnDoe = { abilities = { "Slash", "CorruptEnergy", "DigitalFootprint" }, targetKiller = false },
+	Slasher = { abilities = { "Slash", "Behead", "GashingWound" }, targetKiller = false },
+}
+local t10 = {
+	Primary = Color3.fromHex("#3498db"), Secondary = Color3.fromHex("#2c3e50"),
+	Accent = Color3.fromHex("#1abc9c"), Dark = Color3.fromHex("#1a1a1a"),
+	Text = Color3.fromHex("#ecf0f1"), Danger = Color3.fromHex("#e74c3c"),
+	LightGray = Color3.fromHex("#bdc3c7"), DarkGray = Color3.fromHex("#7f8c8d"),
+	White = Color3.fromHex("#ffffff"),
+}
+local t11 = {
+	Survivor = Color3.fromRGB(0, 255, 0), Killer = Color3.fromRGB(255, 0, 0),
+	Items = Color3.fromRGB(128, 0, 128), Generator = Color3.fromRGB(0, 191, 255),
+}
+u1.TransparencyValue = 0.15
+u1:AddTheme({
+	Name = "outlawdevTheme", Accent = "#18181b", Dialog = "#18181b",
+	Outline = "#FFFFFF", Text = "#FFFFFF", Placeholder = "#000000",
+	Background = "#0e0e10", Button = "#52525b", Icon = "#00f7ff",
+})
+u1:SetTheme("outlawdevTheme")
+
+local function u16(p1, p2, p3)
+	local s1 = ""
+	for i = 1, #p1 do
+		local v187 = (i - 1) / (#p1 - 1)
+		local v188 = math.floor((p2.R + (p3.R - p2.R) * v187) * 255)
+		local v189 = math.floor((p2.G + (p3.G - p2.G) * v187) * 255)
+		local v190 = math.floor((p2.B + (p3.B - p2.B) * v187) * 255)
+		s1 = s1 .. string.format("<font color=\"rgb(%d,%d,%d)\">%s</font>", v188, v189, v190, p1:sub(i, i))
+	end
+	return s1
+end
+
+local v17 = u1:CreateWindow({
+	Title = u16("outlaw.dev", t10.Primary, t10.Text),
+	Icon = "infinity",
+	Author = u16("outlaw.dev", t10.LightGray, t10.Text),
+	Folder = "outlaw.dev",
+	Size = UDim2.fromOffset(400, 240),
+	Theme = "outlawdevTheme",
+	Background = u1:Gradient({
+		["0"] = { Color = t10.Dark, Transparency = 0 },
+		["50"] = { Color = t10.Secondary, Transparency = 0 },
+		["100"] = { Color = Color3.fromHex("#000000"), Transparency = 0 },
+	}, { Rotation = 150 }),
+	User = { Enabled = true, Anonymous = false, Callback = function()
+		u1:Notify({ Title = "outlaw.dev", Content = "This is you!", Duration = 3 })
+	end },
+	SideBarWidth = 200, ScrollBarEnabled = true,
+	CornerRadius = UDim.new(0, 14), DropShadow = true,
+})
+local v18 = v17:Section({ Title = u16("MAIN", t10.Primary, t10.Text), Opened = true })
+local v19 = v17:Section({ Title = u16("GAME", t10.Primary, t10.Text), Opened = true })
+local v20 = v17:Section({ Title = u16("SETTINGS", t10.Primary, t10.Text), Opened = true })
+local v21 = v18:Tab({ Title = "INFO", Icon = "info" })
+local v22 = v18:Tab({ Title = "SOCIALS", Icon = "users" })
+local v23 = v18:Tab({ Title = "CHARACTER", Icon = "user" })
+local v24 = v19:Tab({ Title = "ESP", Icon = "eye" })
+local v25 = v19:Tab({ Title = "AIMBOT", Icon = "axe" })
+local v26 = v19:Tab({ Title = "SURVIVOR", Icon = "plus" })
+local v27 = v19:Tab({ Title = "KILLER", Icon = "sword" })
+local v28 = v20:Tab({ Title = "GAME SETTINGS", Icon = "settings" })
+local u29 = v20:Tab({ Title = "SERVER", Icon = "server" })
+local v30 = v20:Tab({ Title = "MISC", Icon = "wrench" })
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local ContextActionService = game:GetService("ContextActionService")
+local Lighting = game:GetService("Lighting")
+local TweenService = game:GetService("TweenService")
+local HttpService = game:GetService("HttpService")
+local GroupService = game:GetService("GroupService")
+local CoreGui = game:GetService("CoreGui")
+
+local function u30()
+	local v162 = false
+	u5.killerModel = nil
+	if workspace:FindFirstChild("Players") and workspace.Players:FindFirstChild("Killers") then
+		for _, child in pairs(workspace.Players.Killers:GetChildren()) do
+			if child:GetAttribute("Username") ~= Players.LocalPlayer.Name then
+				if child:GetAttribute("Username") and Players:FindFirstChild(child:GetAttribute("Username")) then
+					u5.killerModel = child
+				end
+			else
+				u5.killerModel = child
+				v162 = true
+			end
+		end
+		u5.isSurvivor = not v162
+		u5.isKiller = v162
+	end
+end
+RunService.Heartbeat:Connect(u30)
+local function u31(p4)
+	local pg = Players.LocalPlayer.PlayerGui
+	if pg:FindFirstChild("MainUI") and pg.MainUI:FindFirstChild("AbilityContainer") then
+		local a = pg.MainUI.AbilityContainer:FindFirstChild(p4)
+		if a and a:FindFirstChild("CooldownTime") then return a.CooldownTime.Text == "" end
+	end
+	return false
+end
+local n1, timestamp, n2 = 0, tick(), 0
+RunService.RenderStepped:Connect(function() n1 = n1 + 1 end)
+local function u35()
+	local tn = tick()
+	local d = tn - timestamp
+	if d >= 1 then n2 = n1 / d; n1 = 0; timestamp = tn end
+	return math.floor(n2)
+end
+
+local n3, n4 = 0, 0
+local function u46()
+	ContextActionService:UnbindAction("outlawdev_Flight_Up")
+	ContextActionService:UnbindAction("outlawdev_Flight_Down")
+	n4, n3 = 0, 0
+end
+local function u47()
+	if t1.flying then return end
+	t1.flying = true
+	local lp = Players.LocalPlayer
+	local char = lp.Character or lp.CharacterAdded:Wait()
+	local root = char:WaitForChild("HumanoidRootPart")
+	local hum = char:FindFirstChildOfClass("Humanoid")
+	if not hum then return end
+	hum.AutoRotate = false
+	t4.bodyGyro = Instance.new("BodyGyro")
+	t4.bodyGyro.P = 90000
+	t4.bodyGyro.MaxTorque = Vector3.new(9e9, 9e9, 9e9)
+	t4.bodyGyro.CFrame = root.CFrame
+	t4.bodyGyro.Parent = root
+	t4.bodyVel = Instance.new("BodyVelocity")
+	t4.bodyVel.MaxForce = Vector3.new(9e9, 9e9, 9e9)
+	t4.bodyVel.Velocity = Vector3.zero
+	t4.bodyVel.Parent = root
+	t4.flightConn = RunService.Heartbeat:Connect(function()
+		local cam = workspace.CurrentCamera
+		local lv, rv = cam.CFrame.LookVector, cam.CFrame.RightVector
+		local md = hum.MoveDirection
+		local fwd = md:Dot(Vector3.new(lv.X, 0, lv.Z).Unit)
+		local right = md:Dot(Vector3.new(rv.X, 0, rv.Z).Unit)
+		local vy = md.Magnitude > 0 and lv.Y * fwd or 0
+		local v = lv * fwd + rv * right
+		local dir = Vector3.new(v.X, vy, v.Z)
+		if dir.Magnitude > 1 then dir = dir.Unit end
+		t4.bodyVel.Velocity = dir * t3.flySpeed
+		t4.bodyGyro.CFrame = CFrame.lookAt(root.Position, root.Position + lv, cam.CFrame.UpVector)
+	end)
+end
+local function u48()
+	if not t1.flying then return end
+	t1.flying = false
+	u46()
+	if t4.flightConn then t4.flightConn:Disconnect(); t4.flightConn = nil end
+	if t4.bodyGyro then t4.bodyGyro:Destroy(); t4.bodyGyro = nil end
+	if t4.bodyVel then t4.bodyVel:Destroy(); t4.bodyVel = nil end
+	local char = Players.LocalPlayer.Character
+	local hum = char and char:FindFirstChildOfClass("Humanoid")
+	if hum then hum.AutoRotate = true end
+end
+local function u49(p5)
+	t1.infiniteStamina = p5
+	local ok, mod = pcall(function() return require(game.ReplicatedStorage.Systems.Character.Game.Sprinting) end)
+	if not ok or type(mod) ~= "table" then return end
+	if not p5 then
+		if t4.staminaConnection then t4.staminaConnection:Disconnect(); t4.staminaConnection = nil end
+		mod.StaminaLossDisabled = nil
+	else
+		if t4.staminaConnection then t4.staminaConnection:Disconnect() end
+		t4.staminaConnection = RunService.Heartbeat:Connect(function()
+			if t1.infiniteStamina then
+				mod.StaminaLossDisabled = function() return true end
+			else
+				t4.staminaConnection:Disconnect()
+				mod.StaminaLossDisabled = nil
+			end
+		end)
+	end
+end
+local function u50()
+	if t4.antiStunConnection then return end
+	t4.antiStunConnection = RunService.Heartbeat:Connect(function()
+		if not t1.antiStunActive then return end
+		local char = Players.LocalPlayer.Character
+		if char and char:FindFirstChild("SpeedMultipliers") then
+			local s = char.SpeedMultipliers:FindFirstChild("Stunned")
+			if s and s.Value < 1 then s.Value = 1 end
+		end
+	end)
+end
+local function u51()
+	if t4.antiStunConnection then t4.antiStunConnection:Disconnect(); t4.antiStunConnection = nil end
+end
+local function u52()
+	if t4.antiSlowConnection then return end
+	t4.antiSlowConnection = RunService.Heartbeat:Connect(function()
+		if not t1.antiSlowActive then return end
+		local char = Players.LocalPlayer.Character
+		if char and char:FindFirstChild("SpeedMultipliers") then
+			for _, c in pairs(char.SpeedMultipliers:GetChildren()) do
+				if c:IsA("NumberValue") and c.Value < 1 then c.Value = 1 end
+			end
+		end
+	end)
+end
+local function u53()
+	if t4.antiSlowConnection then t4.antiSlowConnection:Disconnect(); t4.antiSlowConnection = nil end
+end
+
+-- A helpers
+local function uPickupStart()
+	if t1.autoPickupActive then return end
+	t1.autoPickupActive = true
+	t4.autoPickupConnection = RunService.Heartbeat:Connect(function()
+		if not t1.autoPickupActive then return end
+		local char = Players.LocalPlayer.Character
+		local hrp = char and char:FindFirstChild("HumanoidRootPart")
+		if not hrp then return end
+		for _, obj in pairs(workspace:GetDescendants()) do
+			if obj:IsA("Tool") then
+				local prompt = obj:FindFirstChildWhichIsA("ProximityPrompt", true)
+				local handle = obj:FindFirstChild("Handle") or obj:FindFirstChildWhichIsA("BasePart")
+				if prompt and handle and (handle.Position - hrp.Position).Magnitude <= 4.5 then
+					pcall(fireproximityprompt, prompt)
+				end
+			end
+		end
+		task.wait(0.2)
+	end)
+end
+local function uPickupStop()
+	if t1.autoPickupActive then
+		t1.autoPickupActive = false
+		if t4.autoPickupConnection then t4.autoPickupConnection:Disconnect(); t4.autoPickupConnection = nil end
+	end
+end
+local function uEnableJumping(p)
+	t1.enableJumpingActive = p
+	local char = Players.LocalPlayer.Character
+	local h = char and char:FindFirstChildOfClass("Humanoid")
+	if not h then return end
+	if p then
+		if not h:GetAttribute("OGJumpPower") then h:SetAttribute("OGJumpPower", h.JumpPower) end
+		h.UseJumpPower = true
+		h.JumpPower = 47
+		if t4.enableJumpingConnection then t4.enableJumpingConnection:Disconnect() end
+		t4.enableJumpingConnection = h.StateChanged:Connect(function(_, new)
+			if not t1.enableJumpingActive then return end
+			if new == Enum.HumanoidStateType.Landed then h.JumpPower = 47 end
+		end)
+	else
+		if t4.enableJumpingConnection then t4.enableJumpingConnection:Disconnect(); t4.enableJumpingConnection = nil end
+		if h:GetAttribute("OGJumpPower") then h.JumpPower = h:GetAttribute("OGJumpPower") end
+	end
+end
+local function uAntiSlowCheck(v)
+	if not t1.antiSlownessActive or not v:IsA("NumberValue") then return end
+	if v.Name == "Sprinting" or v.Name:lower() == "emoting" then return end
+	if v.Name == "DirectionalMovement" or v.Name == "FixingGenerator" or v.Name:upper() == "ENRAGED" then
+		if v.Value < 1 then v.Value = 1 end
+	elseif v.Value > 0.05 and v.Value < 1 then
+		pcall(function() v:Destroy() end)
+	end
+end
+local function uAntiSlowness(p)
+	t1.antiSlownessActive = p
+	if not p then
+		if t4.antiSlownessConnection then t4.antiSlownessConnection:Disconnect(); t4.antiSlownessConnection = nil end
+		return
+	end
+	local char = Players.LocalPlayer.Character
+	local sm = char and char:FindFirstChild("SpeedMultipliers")
+	if not sm then return end
+	for _, v in pairs(sm:GetChildren()) do uAntiSlowCheck(v) end
+	if t4.antiSlownessConnection then t4.antiSlownessConnection:Disconnect() end
+	t4.antiSlownessConnection = sm.ChildAdded:Connect(function(v)
+		uAntiSlowCheck(v)
+		if v:IsA("NumberValue") then
+			v:GetPropertyChangedSignal("Value"):Connect(function() uAntiSlowCheck(v) end)
+		end
+	end)
+end
+local function getInGame()
+	local map = workspace:FindFirstChild("Map")
+	return map and map:FindFirstChild("Ingame")
+end
+local function uJDTrails(p)
+	t1.disableJDTrails = p
+	local ig = getInGame()
+	if not ig then return end
+	for _, f in pairs(ig:GetChildren()) do
+		if f:IsA("Folder") and f.Name:find("JohnDoeTrail") then
+			for _, part in pairs(f:GetChildren()) do
+				if part:IsA("BasePart") then part.CanTouch = not p end
+			end
+		end
+	end
+end
+local function uJDFootprints(p)
+	t1.disableJDFootprints = p
+	local ig = getInGame()
+	if not ig then return end
+	for _, f in pairs(ig:GetChildren()) do
+		if f:IsA("Folder") and f.Name:find("Shadows") then
+			for _, part in pairs(f:GetChildren()) do
+				if part:IsA("BasePart") then part.CanTouch = not p end
+			end
+		end
+	end
+end
+local function uSmallerSpikes(p)
+	t1.smallerSpikes = p
+	local ig = getInGame()
+	if not ig then return end
+	for _, v in pairs(ig:GetChildren()) do
+		if v.Name == "SpikeCollision" then
+			v.Size = p and Vector3.new(11, 3.5, 3.5) or Vector3.new(11, 5, 5)
+			v.Shape = p and Enum.PartType.Cylinder or Enum.PartType.Block
+		end
+	end
+end
+local function uNoliNPC(p)
+	t1.disableNoliNPC = p
+	local killers = workspace:FindFirstChild("Players") and workspace.Players:FindFirstChild("Killers")
+	local ig = getInGame()
+	if p then
+		if killers then
+			for _, v in pairs(killers:GetChildren()) do
+				if v.Name:lower() == "noli" and not Players:GetPlayerFromCharacter(v) then
+					v.Parent = Lighting
+					pcall(function() v:PivotTo(v:GetPivot() * CFrame.new(0, -100, 0)) end)
+				end
+			end
+		end
+	else
+		for _, v in pairs(Lighting:GetChildren()) do
+			if v.Name:lower() == "noli" and ig then
+				v.Parent = ig
+				pcall(function() v:PivotTo(v:GetPivot() * CFrame.new(0, 100, 0)) end)
+			end
+		end
+	end
+end
+local function u007n7NPC(p)
+	t1.disable007n7NPC = p
+	local ig = getInGame()
+	if p then
+		if ig then
+			for _, v in pairs(ig:GetChildren()) do
+				if v.Name:lower() == "007n7" and not Players:GetPlayerFromCharacter(v) then
+					v.Parent = Lighting
+				end
+			end
+		end
+	else
+		for _, v in pairs(Lighting:GetChildren()) do
+			if v.Name:lower() == "007n7" and ig then v.Parent = ig end
+		end
+	end
+end
+local function uHideInjury(p)
+	t1.hideInjury = p
+	local temp = Players.LocalPlayer.PlayerGui:FindFirstChild("TemporaryUI")
+	if temp then
+		for _, v in pairs(temp:GetDescendants()) do
+			if v.Name == "redFlash" or v.Name == "injuredVignette" then v.Visible = not p end
+		end
+	end
+	local desat = Lighting:FindFirstChild("HealthDesaturation")
+	if desat then desat.Enabled = not p end
+end
+local function uDisableBlindness(p)
+	t1.disableBlindness = p
+	local bb = Lighting:FindFirstChild("BlindnessBlur")
+	if bb and bb:IsA("BlurEffect") then bb.Enabled = not p end
+end
+local function uExtFOV(v)
+	local pd = Players.LocalPlayer:FindFirstChild("PlayerData")
+	local fov = pd and (pd:FindFirstChild("FieldOfView", true) or pd:FindFirstChild("FOV", true))
+	if fov and fov:IsA("NumberValue") then fov.Value = v end
+end
+local function uExtZoom(v)
+	Players.LocalPlayer.CameraMaxZoomDistance = game:GetService("StarterPlayer").CameraMaxZoomDistance + (v * 0.25)
+end
+local function uShowChat(p)
+	t1.showChat = p
+	local cwc = game:GetService("TextChatService"):FindFirstChildOfClass("ChatWindowConfiguration")
+	if cwc then cwc.Enabled = p end
+end
+local function uDeleteRagdolls(p)
+	t1.deleteRagdolls = p
+	local folder = workspace:FindFirstChild("Ragdolls")
+	if p and folder then folder:ClearAllChildren() end
+end
+local function uShowPrivacy(p)
+	t1.showPrivacy = p
+	for _, plr in pairs(Players:GetPlayers()) do
+		if plr ~= Players.LocalPlayer then
+			local pd = plr:FindFirstChild("PlayerData")
+			local priv = pd and pd:FindFirstChild("Privacy", true)
+			if priv then
+				for _, v in pairs(priv:GetChildren()) do
+					if v:IsA("BoolValue") then
+						if not v:GetAttribute("OGPriv") then v:SetAttribute("OGPriv", v.Value) end
+						v.Value = p and false or v:GetAttribute("OGPriv")
+					end
+				end
+			end
+		end
+	end
+end
+local function getClosestKiller(maxDist)
+	local char = Players.LocalPlayer.Character
+	local hrp = char and char:FindFirstChild("HumanoidRootPart")
+	if not hrp then return nil end
+	local killers = workspace:FindFirstChild("Players") and workspace.Players:FindFirstChild("Killers")
+	if not killers then return nil end
+	local best, dist = nil, maxDist or 55
+	for _, v in pairs(killers:GetChildren()) do
+		local r = v:FindFirstChild("HumanoidRootPart")
+		if r then
+			local d = (r.Position - hrp.Position).Magnitude
+			if d < dist then dist = d; best = v end
+		end
+	end
+	return best
+end
+local function uAutoPunchStart()
+	if t1.autoPunchActive then return end
+	t1.autoPunchActive = true
+	t4.autoPunchConnection = RunService.Heartbeat:Connect(function()
+		if not t1.autoPunchActive then return end
+		local char = Players.LocalPlayer.Character
+		if not char or char.Name ~= "Guest1337" then return end
+		local sm = char:FindFirstChild("SpeedMultipliers")
+		if not sm or not sm:FindFirstChild("GuestBlocking") then return end
+		local h = char:FindFirstChildOfClass("Humanoid")
+		if not h or (h:GetAttribute("Overheal") or 0) < 10 then return end
+		if not getClosestKiller(55) then return end
+		pcall(function()
+			game.ReplicatedStorage.Modules.Network.RemoteEvent:FireServer("UseActorAbility", "Punch")
+		end)
+		task.wait(0.5)
+	end)
+end
+local function uAutoPunchStop()
+	if t1.autoPunchActive then
+		t1.autoPunchActive = false
+		if t4.autoPunchConnection then t4.autoPunchConnection:Disconnect(); t4.autoPunchConnection = nil end
+	end
+end
+local function uControlDash(p)
+	t1.controlDashActive = p
+	if not p then return end
+	local char = Players.LocalPlayer.Character
+	local hrp = char and char:FindFirstChild("HumanoidRootPart")
+	if not hrp then return end
+	hrp.ChildAdded:Connect(function(child)
+		if not child:IsA("LinearVelocity") then return end
+		local origDir, origMag = child.LineDirection, child.LineDirection.Magnitude
+		local conn
+		conn = RunService.Heartbeat:Connect(function()
+			if not t1.controlDashActive or not child.Parent then
+				child.LineDirection = origDir
+				conn:Disconnect()
+				return
+			end
+			local c = Players.LocalPlayer.Character
+			if not c or not c.Name:gsub("0", "O"):lower():find("coolkid") then return end
+			local h = c:FindFirstChildOfClass("Humanoid")
+			if h and h.MoveDirection ~= Vector3.zero then
+				child.LineDirection = h.MoveDirection * origMag
+			else
+				local cam = workspace.CurrentCamera
+				local cd = Vector3.new(cam.CFrame.LookVector.X, 0, cam.CFrame.LookVector.Z)
+				child.LineDirection = cd.Unit * origMag
+			end
+		end)
+	end)
+end
+
+-- B: hooked
+local INV = { active = false, underground = false, originalNamecall = nil, unreliable = nil }
+local function invInstallHook()
+	if INV.originalNamecall then return true end
+	if not capOK("hookmetamethod", "checkcaller", "newcclosure") then
+		capWarn("Invincible", { "hookmetamethod", "checkcaller", "newcclosure" })
+		return false
+	end
+	local net = game.ReplicatedStorage:FindFirstChild("Modules")
+	net = net and net:FindFirstChild("Network", true)
+	INV.unreliable = net and net:FindFirstChild("UnreliableRemoteEvent")
+	if not INV.unreliable then capWarn("Invincible", { "UnreliableRemoteEvent" }); return false end
+	local ok, res = pcall(function()
+		local __nc
+		__nc = CAP.hookmetamethod(game, "__namecall", CAP.newcclosure(function(self, ...)
+			if not CAP.checkcaller() and INV.underground and getnamecallmethod() == "FireServer" and self == INV.unreliable then
+				local args = { ... }
+				if args[1] == 1 then return function() return nil end end
+			end
+			return __nc(self, ...)
+		end))
+		return __nc
+	end)
+	if ok and res then INV.originalNamecall = res; return true end
+	return false
+end
+local function invIsClear(hitbox, pos)
+	if not hitbox or not pos then return false end
+	local p = OverlapParams.new()
+	p.FilterType = Enum.RaycastFilterType.Include
+	p.MaxParts = 1
+	p.FilterDescendantsInstances = { hitbox }
+	return #workspace:GetPartBoundsInRadius(pos, 2.5, p) == 0
+end
+local function invVelocity(target)
+	local root = Players.LocalPlayer.Character and Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+	if not root then return end
+	local body = Instance.new("BodyVelocity")
+	body.MaxForce = Vector3.new(9e9, 9e9, 9e9)
+	body.Velocity = Vector3.zero
+	body.Parent = root
+	local t0 = workspace.DistributedGameTime + 7
+	while (root.Position - target).Magnitude > 2 and workspace.DistributedGameTime < t0 do
+		body.Velocity = (target - root.Position).Unit * 100
+		RunService.RenderStepped:Wait()
+	end
+	body:Destroy()
+end
+local function invGoUnder(on)
+	local char = Players.LocalPlayer.Character
+	if not char then return end
+	local root = char:FindFirstChild("HumanoidRootPart")
+	local head = char:FindFirstChild("Head")
+	local hum = char:FindFirstChildOfClass("Humanoid")
+	local hitbox = char:FindFirstChild("QueryHitbox")
+	if not (root and head and hum) then return end
+	if on then
+		if INV.underground then return true end
+		local old = root.CFrame
+		local under = old * CFrame.new(0, -22, 0)
+		hum.CameraOffset = Vector3.new(0, 12e12, 0)
+		task.wait(0.1)
+		root.CFrame = under
+		for _ = 1, 3 do
+			root.Velocity = Vector3.zero
+			invVelocity(under.Position)
+			head.Anchored = true
+			repeat task.wait() until invIsClear(hitbox, old.Position)
+			INV.underground = true
+			task.wait()
+			head.Anchored = false
+			root.CFrame = old
+			root.Velocity = Vector3.zero
+			if invIsClear(hitbox, old.Position) then break end
+		end
+		if not invIsClear(hitbox, old.Position) then
+			INV.underground = false
+			hum.CameraOffset = Vector3.zero
+			return false
+		end
+		return true
+	else
+		INV.underground = false
+		local hum = char:FindFirstChildOfClass("Humanoid")
+		if hum then hum.CameraOffset = Vector3.zero end
+		if head then head.Anchored = false end
+		return true
+	end
+end
+local function uInvincible(v)
+	t1.invincibleActive = v
+	if v then
+		if not invInstallHook() then t1.invincibleActive = false; return end
+		task.spawn(function()
+			if not invGoUnder(true) then t1.invincibleActive = false end
+		end)
+	else
+		invGoUnder(false)
+	end
+end
+local function uAutoEscapeStart()
+	if t1.autoEscapeActive then return end
+	t1.autoEscapeActive = true
+	local temp = Players.LocalPlayer.PlayerGui:FindFirstChild("TemporaryUI")
+	if not temp then t1.autoEscapeActive = false; return end
+	local function handleQTE(ui)
+		if ui.Name:upper() ~= "QTE" or not ui:FindFirstChildOfClass("UIAspectRatioConstraint") then return end
+		task.spawn(function()
+			while ui and ui.Visible do
+				local cd = 0.5
+				task.wait(Random.new():NextNumber(cd - 0.2 * cd, cd + 0.2 * cd))
+				if not t1.autoEscapeActive then break end
+				local killers = workspace:FindFirstChild("Players") and workspace.Players:FindFirstChild("Killers")
+				if killers then
+					for _, k in pairs(killers:GetChildren()) do
+						if k.Name:lower() == "nosferatu" then
+							local plr = Players:GetPlayerFromCharacter(k)
+							if plr then
+								pcall(function()
+									game.ReplicatedStorage.Modules.Network.RemoteEvent:FireServer(plr.Name .. "NosHookQTE", { true })
+								end)
+							end
+						end
+					end
+				end
+			end
+		end)
+	end
+	for _, c in pairs(temp:GetChildren()) do handleQTE(c) end
+	if t4.autoEscapeConnection then t4.autoEscapeConnection:Disconnect() end
+	t4.autoEscapeConnection = temp.ChildAdded:Connect(handleQTE)
+end
+local function uAutoEscapeStop()
+	if t1.autoEscapeActive then
+		t1.autoEscapeActive = false
+		if t4.autoEscapeConnection then t4.autoEscapeConnection:Disconnect(); t4.autoEscapeConnection = nil end
+	end
+end
+local function uAutoDisarm(v)
+	t1.autoDisarmActive = v
+	if not v then return end
+	if not capOK("require", "hookfunction") then capWarn("Auto Disarm", { "require", "hookfunction" }); t1.autoDisarmActive = false; return end
+	local rs = game.ReplicatedStorage
+	local azure = rs.Assets and rs.Assets:FindFirstChild("Killers") and rs.Assets.Killers:FindFirstChild("Azure")
+	local qte = azure and azure:FindFirstChild("cl_ConstructQTE", true)
+	if not qte then capWarn("Auto Disarm", { "Azure QTE" }); t1.autoDisarmActive = false; return end
+	local ok, mod = pcall(CAP.require, qte)
+	if not ok or not mod or not mod.new then t1.autoDisarmActive = false; return end
+	if t4.azureHook then return end
+	local orig
+	orig = CAP.hookfunction(mod.new, function(...)
+		local inst = orig(...)
+		task.delay(0.05, function()
+			if t1.autoDisarmActive and typeof(inst) == "table" and inst.AddProgress then
+				pcall(function() inst:AddProgress(100) end)
+			end
+		end)
+		return inst
+	end)
+	t4.azureHook = true
+end
+local function uVoidRush(v)
+	t1.betterVoidRush = v
+	if not capOK("require") then capWarn("Better Void Rush", { "require" }); return end
+	local noli = game.ReplicatedStorage.Assets and game.ReplicatedStorage.Assets:FindFirstChild("Killers")
+	noli = noli and noli:FindFirstChild("Noli")
+	local cfg = noli and noli:FindFirstChild("Config", true)
+	if not cfg then return end
+	local ok, data = pcall(CAP.require, cfg)
+	if not ok or type(data) ~= "table" then return end
+	for _, e in ipairs({
+		{ Name = "InitialTurnDuration", Val = 0.005, Default = 1.5 },
+		{ Name = "TurnSpeed", Val = 10000, Default = 1 },
+		{ Name = "InitialTurnMult", Val = 1000, Default = 6.6 },
+	}) do
+		for k in pairs(data) do
+			if type(k) == "string" and k:find(e.Name) and not k:find(e.Name .. "OG") then
+				if v then
+					if data[k .. "OG"] == nil then data[k .. "OG"] = data[k] end
+					data[k] = e.Val
+				else
+					data[k] = data[k .. "OG"] or e.Default
+				end
+			end
+		end
+	end
+end
+local function uGridOverride(v)
+	t1.overrideGridActive = v
+	if not v then return end
+	if not capOK("require") then capWarn("Grid Override", { "require" }); t1.overrideGridActive = false; return end
+	if t4.gridOverrideHook then return end
+	local flow = game.ReplicatedStorage:FindFirstChild("FlowGame", true)
+	if not flow then capWarn("Grid Override", { "FlowGame" }); t1.overrideGridActive = false; return end
+	local ok, mod = pcall(CAP.require, flow)
+	if not ok or type(mod) ~= "table" or not mod.new then t1.overrideGridActive = false; return end
+	local orig = mod.new
+	mod.new = function(...)
+		local args = { ... }
+		if t1.overrideGridActive and (type(args[2]) == "number" or not args[2]) then
+			args[2] = t1.gridSize
+		end
+		return orig(table.unpack(args))
+	end
+	t4.gridOverrideHook = true
+end
+local autoBlockAnimIDs = { "rbxassetid://94067586317868", "rbxassetid://107925328038675" }
+local function uAutoBlockGuest(p)
+	t1.autoBlockGuestActive = p
+	if not p then
+		if t4.guestBlockConnection then t4.guestBlockConnection:Disconnect(); t4.guestBlockConnection = nil end
+		return
+	end
+	if t4.guestBlockConnection then return end
+	t4.guestBlockConnection = RunService.Heartbeat:Connect(function()
+		if not t1.autoBlockGuestActive then return end
+		local char = Players.LocalPlayer.Character
+		if not char or char.Name ~= "Guest1337" then return end
+		local killers = workspace:FindFirstChild("Players") and workspace.Players:FindFirstChild("Killers")
+		if not killers then return end
+		for _, k in pairs(killers:GetChildren()) do
+			if Players:GetPlayerFromCharacter(k) then
+				local kHum = k:FindFirstChildOfClass("Humanoid")
+				local kAnim = kHum and kHum:FindFirstChildOfClass("Animator")
+				if kAnim then
+					for _, tr in pairs(kAnim:GetPlayingAnimationTracks()) do
+						if table.find(autoBlockAnimIDs, tr.Animation.AnimationId) then
+							pcall(function()
+								game.ReplicatedStorage.Modules.Network.RemoteEvent:FireServer("UseActorAbility", "Block")
+							end)
+							return
+						end
+					end
+				end
+			end
+		end
+	end)
+end
+local ANIM_OVERRIDE = { folder = nil }
+local function uAnimChanger(v)
+	t1.animChangerActive = (v ~= "Original")
+	local char = Players.LocalPlayer.Character
+	local hum = char and char:FindFirstChildOfClass("Humanoid")
+	local anim = hum and hum:FindFirstChildOfClass("Animator")
+	if not anim then return end
+	if ANIM_OVERRIDE.folder then ANIM_OVERRIDE.folder:Destroy(); ANIM_OVERRIDE.folder = nil end
+	if v == "Original" then
+		for _, tr in pairs(anim:GetPlayingAnimationTracks()) do
+			if tr.Animation and tr.Animation:GetAttribute("outlawOverride") then tr:Stop(0) end
+		end
+		return
+	end
+	ANIM_OVERRIDE.folder = Instance.new("Folder")
+	ANIM_OVERRIDE.folder.Name = "outlawOverrideAnim"
+	ANIM_OVERRIDE.folder.Parent = char
+	local a = Instance.new("Animation")
+	a.Name = "Idle"
+	a.AnimationId = "rbxassetid://180435571"
+	a:SetAttribute("outlawOverride", true)
+	a.Parent = ANIM_OVERRIDE.folder
+	local tr = anim:LoadAnimation(a)
+	tr:Play(0.1)
+end
+local STAMINA_MOD = { mod = nil }
+local function uStaminaPreset(v)
+	t1.staminaPreset = v
+	if v == "Original" then return end
+	if not capOK("require") then capWarn("Stamina Preset", { "require" }); return end
+	if not STAMINA_MOD.mod then
+		local ok, mod = pcall(function()
+			return CAP.require(game.ReplicatedStorage.Systems.Character.Game.Sprinting)
+		end)
+		if not ok or type(mod) ~= "table" then return end
+		STAMINA_MOD.mod = mod
+	end
+	local mod = STAMINA_MOD.mod
+	if t4.staminaPresetConn then return end
+	t4.staminaPresetConn = RunService.Heartbeat:Connect(function()
+		if t1.staminaPreset == "Original" then return end
+		if not mod.MaxStamina then return end
+		if t1.staminaPreset == "Infinite" then
+			rawset(mod, "Stamina", mod.MaxStamina)
+		else
+			local add = mod.MaxStamina * (t1.staminaPreset == "Semi-Realistic" and 0.005 or 0.0025)
+			if mod.Stamina < mod.MaxStamina * 0.8 then
+				rawset(mod, "Stamina", math.min(mod.Stamina + add, mod.MaxStamina))
+			end
+		end
+	end)
+end
+
+-- C: host exclusive
+local function hostFire(cmd)
+	local net = game.ReplicatedStorage.Modules.Network.RemoteEvent
+	local ok = pcall(function() net:FireServer("ExecuteCommand", cmd) end)
+	if not ok then pcall(function() net:FireServer("ExecuteCommand", table.unpack(cmd)) end) end
+end
+local function hostLoop(name, build, interval)
+	if t4.hostLoops[name] then return end
+	t4.hostLoops[name] = true
+	task.spawn(function()
+		while t4.hostLoops[name] do
+			local cmd = build()
+			if cmd then hostFire(cmd) end
+			task.wait(interval or 1.25)
+		end
+	end)
+end
+local function hostStop(name) t4.hostLoops[name] = nil end
+local function uHostCrash(v)
+	t1.hostCrashActive = v
+	if not v then hostStop("Crash"); return end
+	local target = t1.hostTargetPlayer
+	if target == "None" then t1.hostCrashActive = false; return end
+	if target == "Everyone" or target == "Both" then
+		hostLoop("Crash", function()
+			for _, p in pairs(Players:GetPlayers()) do
+				if p ~= Players.LocalPlayer then hostFire({ "GiveStatus", p.Name, "Nausea", math.huge, 1 }) end
+			end
+			return nil
+		end, 1.5)
+	else
+		hostLoop("Crash", function() return { "GiveStatus", target, "Nausea", math.huge, 1 } end, 1.5)
+	end
+end
+local function uHostSky(v)
+	t1.hostSkyGlitch = v
+	if not v then hostStop("Sky"); return end
+	hostLoop("Sky", function() return { "GiveStatus", "All", "Nausea", -1e11, 10 } end, 1.5)
+end
+local function uHostInstaKill(v)
+	t1.hostInstaKill = v
+	if not v then hostStop("InstaKill"); return end
+	hostLoop("InstaKill", function() return { "GiveStatus", Players.LocalPlayer.Name, "Weakness", -1e11, 2 } end, 1.25)
+end
+local function uHostNoDamage(v)
+	t1.hostNoDamage = v
+	if not v then hostStop("NoDamage"); return end
+	hostLoop("NoDamage", function()
+		for _, p in pairs(Players:GetPlayers()) do
+			if p ~= Players.LocalPlayer then hostFire({ "GiveStatus", p.Name, "Strength", -1e11, 2 }) end
+		end
+		return nil
+	end, 1.25)
+end
+local function uHostNoCooldown(v)
+	t1.hostNoCooldown = v
+	if not v then hostStop("NoCooldown"); return end
+	hostLoop("NoCooldown", function() return { "GiveStatus", Players.LocalPlayer.Name, "Fatigue", -1e8, 2 } end, 1.25)
+end
+-- ===== ESP (lag-fixed) =====
+local function u54(p13, p14, p15, p16)
+	if p13 and p13:IsA("BasePart") then
+		if not p15 then p15 = Color3.fromRGB(255, 255, 255) end
+		local ex = p13:FindFirstChild("outlawdev_Billboard")
+		if ex then ex:Destroy() end
+		local bb = Instance.new("BillboardGui")
+		bb.Name = "outlawdev_Billboard"
+		bb.Adornee = p13
+		bb.Size = UDim2.new(0, 200, 0, 50)
+		bb.StudsOffset = p16 or Vector3.new(0, 3, 0)
+		bb.AlwaysOnTop = true
+		bb.MaxDistance = 1000
+		bb.Parent = p13
+		bb:SetAttribute("BaseName", p14)
+		local tl = Instance.new("TextLabel")
+		tl.Size = UDim2.new(1, 0, 1, 0)
+		tl.BackgroundTransparency = 1
+		tl.Text = p14
+		tl.TextColor3 = p15
+		tl.TextSize = t3.espTextSize or 14
+		tl.Font = Enum.Font.GothamBold
+		tl.TextStrokeTransparency = 0
+		tl.TextStrokeColor3 = Color3.new(0, 0, 0)
+		tl.Parent = bb
+		return bb
+	end
+	return nil
+end
+local function u55(p17, p18)
+	if p17 and p17:IsA("Model") then
+		if not p18 then p18 = Color3.fromRGB(255, 255, 255) end
+		local ex = p17:FindFirstChild("outlawdev_Highlight")
+		if ex then ex:Destroy() end
+		local h = Instance.new("Highlight")
+		h.Name = "outlawdev_Highlight"
+		h.Adornee = p17
+		h.FillColor = p18
+		h.OutlineColor = p18
+		h.FillTransparency = t3.highlightTransparency or 0.5
+		h.OutlineTransparency = t3.highlightOutlineTransparency or 0
+		h.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+		h.Parent = p17
+		return h
+	end
+	return nil
+end
+local function u56(p19)
+	local char = Players.LocalPlayer.Character
+	local hrp = char and char:FindFirstChild("HumanoidRootPart")
+	if hrp then return math.floor((p19 - hrp.Position).Magnitude) end
+	return 0
+end
+local function u57(key)
+	if t6[key] then
+		for _, v in pairs(t6[key]) do
+			if v and v.Parent then pcall(function() v:Destroy() end) end
+		end
+		t6[key] = {}
+	end
+	if t7[key] then
+		for _, v in pairs(t7[key]) do
+			if v then pcall(function() v:Disconnect() end) end
+		end
+		t7[key] = {}
+	end
+end
+local function u58()
+	u57("survivors")
+	if not (u8.SurvivorsHighlight or u8.SurvivorsNameESP or u8.SurvivorsDistance) then return end
+	local p = workspace:FindFirstChild("Players")
+	local s = p and p:FindFirstChild("Survivors")
+	if not s then return end
+	for _, child in pairs(s:GetChildren()) do
+		if child:IsA("Model") then
+			local name = child:GetAttribute("Username") or child.Name
+			if u8.SurvivorsHighlight then
+				local h = u55(child, t11.Survivor)
+				if h then table.insert(t6.survivors, h) end
+			end
+			if u8.SurvivorsNameESP or u8.SurvivorsDistance then
+				local head = child:FindFirstChild("Head")
+				if head then
+					local bb = u54(head, u8.SurvivorsNameESP and name or "", t11.Survivor, Vector3.new(0, 4, 0))
+					if bb then table.insert(t6.survivors, bb) end
+				end
+			end
+		end
+	end
+end
+local function u59()
+	u57("killers")
+	if not (u8.KillerHighlight or u8.KillerNameESP or u8.KillerDistance) then return end
+	local p = workspace:FindFirstChild("Players")
+	local k = p and p:FindFirstChild("Killers")
+	if not k then return end
+	for _, child in pairs(k:GetChildren()) do
+		if child:IsA("Model") then
+			local name = child:GetAttribute("Username") or child.Name
+			if u8.KillerHighlight then
+				local h = u55(child, t11.Killer)
+				if h then table.insert(t6.killers, h) end
+			end
+			if u8.KillerNameESP or u8.KillerDistance then
+				local head = child:FindFirstChild("Head")
+				if head then
+					local bb = u54(head, u8.KillerNameESP and name or "", t11.Killer, Vector3.new(0, 4, 0))
+					if bb then table.insert(t6.killers, bb) end
+				end
+			end
+		end
+	end
+end
+local function u60()
+	u57("items")
+	if not (u8.ItemsHighlight or u8.ItemsNameESP or u8.ItemsDistance) then return end
+	local seen = {}
+	local roots = { workspace }
+	local map = workspace:FindFirstChild("Map")
+	if map then table.insert(roots, map) end
+	for _, root in pairs(roots) do
+		for _, child in pairs(root:GetDescendants()) do
+			if child:IsA("Tool") and not seen[child] then
+				seen[child] = true
+				local handle = child:FindFirstChild("Handle") or child:FindFirstChildWhichIsA("BasePart")
+				if handle then
+					if u8.ItemsHighlight then
+						local h = u55(child, t11.Items)
+						if h then table.insert(t6.items, h) end
+					end
+					if u8.ItemsNameESP or u8.ItemsDistance then
+						local bb = u54(handle, u8.ItemsNameESP and child.Name or "", t11.Items, Vector3.new(0, 2, 0))
+						if bb then table.insert(t6.items, bb) end
+					end
+				end
+			end
+		end
+	end
+end
+local function u61()
+	u57("generators")
+	if not (u8.GeneratorsHighlight or u8.GeneratorsNameESP or u8.GeneratorsDistance) then return end
+	local seen = {}
+	local roots = { workspace }
+	local map = workspace:FindFirstChild("Map")
+	if map then table.insert(roots, map) end
+	for _, root in pairs(roots) do
+		for _, child in pairs(root:GetDescendants()) do
+			if not seen[child] and (child.Name:lower():find("generator") or child.Name:lower():find("gen")) then
+				seen[child] = true
+				local part = child:FindFirstChildWhichIsA("BasePart") or (child:IsA("BasePart") and child)
+				if part then
+					if u8.GeneratorsHighlight then
+						local h = u55(child, t11.Generator)
+						if h then table.insert(t6.generators, h) end
+					end
+					if u8.GeneratorsNameESP or u8.GeneratorsDistance then
+						local bb = u54(part, u8.GeneratorsNameESP and "Generator" or "", t11.Generator, Vector3.new(0, 5, 0))
+						if bb then table.insert(t6.generators, bb) end
+					end
+				end
+			end
+		end
+	end
+end
+local function u62()
+	pcall(function() u58(); u59(); u60(); u61() end)
+end
+local cleanupAllEsp = function()
+	u57("survivors"); u57("killers"); u57("items"); u57("generators")
+end
+local connection = nil
+local lastDistUpdate = 0
+local function updateDistanceLabels()
+	local now = tick()
+	if now - lastDistUpdate < 0.1 then return end
+	lastDistUpdate = now
+	local char = Players.LocalPlayer.Character
+	local hrp = char and char:FindFirstChild("HumanoidRootPart")
+	if not hrp then return end
+	local origin = hrp.Position
+	for _, list in pairs(t6) do
+		for _, gui in pairs(list) do
+			if gui and gui.Parent and gui:IsA("BillboardGui") and gui.Adornee then
+				local d = math.floor((gui.Adornee.Position - origin).Magnitude)
+				local base = gui:GetAttribute("BaseName") or ""
+				gui.TextLabel.Text = base .. " [" .. d .. "m]"
+			end
+		end
+	end
+end
+local function u64()
+	if connection then pcall(function() connection:Disconnect() end) end
+	connection = RunService.Heartbeat:Connect(function()
+		local ts = tick()
+		if (t3.espUpdateInterval or 1) <= ts - (t2.lastEspUpdate or 0) then
+			t2.lastEspUpdate = ts
+			u62()
+		end
+		updateDistanceLabels()
+	end)
+end
+local function u65(p37, p38)
+	local list = {}
+	local p = workspace:FindFirstChild("Players")
+	if not p then return nil end
+	local folder = p37 and p:FindFirstChild("Survivors") or (p38 and p:FindFirstChild("Killers") or p:FindFirstChild("Survivors"))
+	if not folder then return nil end
+	for _, c in pairs(folder:GetChildren()) do
+		if c:IsA("Model") and c:FindFirstChild("Humanoid") and c.Humanoid.Health > 0 then table.insert(list, c) end
+	end
+	if #list == 0 then return nil end
+	local char = Players.LocalPlayer.Character
+	local hrp = char and char:FindFirstChild("HumanoidRootPart")
+	if not hrp then return nil end
+	local best, huge = nil, math.huge
+	for _, v in pairs(list) do
+		local r = v:FindFirstChild("HumanoidRootPart")
+		if r then
+			local m = (r.Position - hrp.Position).Magnitude
+			if m < huge then huge = m; best = v end
+		end
+	end
+	return best
+end
+local t5 = {}
+local function u66(p39, p40)
+	if not p39 or not p39:FindFirstChild("HumanoidRootPart") then return end
+	local char = Players.LocalPlayer.Character
+	local hrp = char and char:FindFirstChild("HumanoidRootPart")
+	if not hrp then return end
+	local target = p39.HumanoidRootPart
+	local ts = tick()
+	local dur = p40 or 2
+	while dur > tick() - ts and p39 and p39.Parent and p39:FindFirstChild("HumanoidRootPart") do
+		workspace.CurrentCamera.CFrame = CFrame.new(workspace.CurrentCamera.CFrame.Position, target.Position)
+		hrp.CFrame = CFrame.lookAt(hrp.Position, Vector3.new(target.Position.X, target.Position.Y, target.Position.Z))
+		task.wait()
+	end
+end
+local function u67(p41, p42, p43)
+	if t5[p41] then t5[p41]:Disconnect() end
+	t5[p41] = game.ReplicatedStorage.Modules.Network.RemoteEvent.OnClientEvent:Connect(function(...)
+		local args = { ... }
+		if #args >= 2 and args[1] == "UseActorAbility" and table.find(p42, args[2]) then
+			local target = u65(string.find(p41, "Killer") ~= nil, p43)
+			if target then u66(target, 1.5) end
+		end
+	end)
+end
+local function u68(p44, p45)
+	t8[p44] = p45
+	if not p45 then
+		if t5[p44] then t5[p44]:Disconnect(); t5[p44] = nil end
+	else
+		local cfg = t9[p44]
+		if cfg then
+			if type(cfg.targetKiller) ~= "table" then
+				u67(p44, cfg.abilities, cfg.targetKiller)
+			else
+				for k, v in pairs(cfg.targetKiller) do u67(p44, { k }, v) end
+			end
+		end
+	end
+end
+Players.LocalPlayer.CharacterAdded:Connect(function()
+	task.wait(1)
+	for k, v in pairs(t8) do if v then u68(k, false) end end
+end)
+
+-- survivor generator helpers
+local function u69(p58, p59)
+	if p58 and p58:IsA("Instance") then return p58:FindFirstChild(p59) end
+	return nil
+end
+local function u70()
+	local s = u69(workspace.Players, "Survivors")
+	if not s then return false end
+	for _, c in pairs(s:GetChildren()) do
+		if c:IsA("Model") and c:GetAttribute("Username") == Players.LocalPlayer.Name then return true end
+	end
+	return false
+end
+local function u71()
+	local list = {}
+	local ig = u69(workspace.Map, "Ingame")
+	local m = ig and u69(ig, "Map")
+	if m then
+		for _, c in pairs(m:GetChildren()) do
+			if c.Name == "Generator" then table.insert(list, c) end
+		end
+	end
+	return list
+end
+local function u72(p60)
+	local p = u69(p60, "Progress")
+	if not p or not p:IsA("NumberValue") then return 0 end
+	return p.Value
+end
+local function u73()
+	local out = {}
+	for _, v in pairs(u71()) do if u72(v) < 100 then table.insert(out, v) end end
+	return out
+end
+local function u74(p61)
+	local i = u69(p61, "Instances")
+	if i then
+		local c = u69(i, "Cube.001")
+		if c and c:IsA("BasePart") then return c.Position end
+	end
+	local ps = u69(p61, "Positions")
+	if ps then
+		local c = u69(ps, "Center")
+		if c and c:IsA("BasePart") then return c.Position end
+	end
+	for _, d in pairs(p61:GetDescendants()) do
+		if d:IsA("BasePart") then return d.Position end
+	end
+	return Vector3.new(0, 0, 0)
+end
+local function u75()
+	local s = workspace.Players:FindFirstChild("Survivors")
+	if not s then return nil end
+	for _, c in pairs(s:GetChildren()) do
+		if c:IsA("Model") and c:GetAttribute("Username") == Players.LocalPlayer.Name then return c end
+	end
+	return nil
+end
+local function u76()
+	local me = u75()
+	local hrp = me and u69(me, "HumanoidRootPart")
+	if not hrp then return nil end
+	local gens = u73()
+	if #gens == 0 then return nil end
+	local best, huge = nil, math.huge
+	for _, g in pairs(gens) do
+		local gp = u74(g)
+		if gp ~= Vector3.new(0, 0, 0) then
+			local m = (gp - hrp.Position).Magnitude
+			if m < huge then huge = m; best = g end
+		end
+	end
+	return best
+end
+local function u77(p62)
+	local me = u75()
+	local hrp = me and u69(me, "HumanoidRootPart")
+	if not hrp then return false end
+	hrp.CFrame = CFrame.new(p62)
+	return true
+end
+local function u78(p63)
+	if t1.promptActivated then return true end
+	local main = u69(p63, "Main")
+	if not main then return false end
+	local prompt = u69(main, "Prompt")
+	if not prompt then
+		for _, d in pairs(main:GetDescendants()) do
+			if d:IsA("ProximityPrompt") then prompt = d; break end
+		end
+	end
+	if prompt and prompt:IsA("ProximityPrompt") then
+		fireproximityprompt(prompt)
+		t1.promptActivated = true
+		return true
+	end
+	return false
+end
+local function u79(p64)
+	local r = u69(p64, "Remotes")
+	if not r then return false end
+	local re = u69(r, "RE")
+	if not re or not re:IsA("RemoteEvent") or u5.repairDebounce[p64] then return false end
+	u5.repairDebounce[p64] = true
+	local ok = pcall(function() re:FireServer() end)
+	task.delay(3, function() u5.repairDebounce[p64] = nil end)
+	return ok
+end
+local function u80()
+	t1.autoRepairActive = false
+	if t4.autoRepairConnection then t4.autoRepairConnection:Disconnect(); t4.autoRepairConnection = nil end
+	if t4.autoFarmGensConnection then t4.autoFarmGensConnection:Disconnect(); t4.autoFarmGensConnection = nil end
+	t1.autoFarmGensActive = false
+	u5.currentRepairGenerator = nil
+	u5.repairDebounce = {}
+	t1.promptActivated = false
+	t1.teleportedToGenerator = false
+end
+local function uFarmGensStop()
+	if t1.autoFarmGensActive then
+		t1.autoFarmGensActive = false
+		if t4.autoFarmGensConnection then t4.autoFarmGensConnection:Disconnect(); t4.autoFarmGensConnection = nil end
+	end
+end
+local function uFarmGensStart()
+	if t1.autoFarmGensActive then return end
+	t1.autoFarmGensActive = true
+	u5.currentRepairGenerator = nil
+	t4.autoFarmGensConnection = RunService.Heartbeat:Connect(function()
+		if not t1.autoFarmGensActive then return end
+		if not u70() then uFarmGensStop(); return end
+		if not u75() then return end
+		if u5.currentRepairGenerator and (not u5.currentRepairGenerator.Parent or u72(u5.currentRepairGenerator) >= 100) then
+			u5.currentRepairGenerator = nil
+			t1.promptActivated = false
+			t1.teleportedToGenerator = false
+		end
+		if not u5.currentRepairGenerator then
+			u5.currentRepairGenerator = u76()
+			if not u5.currentRepairGenerator then uFarmGensStop(); return end
+			t1.promptActivated = false
+			t1.teleportedToGenerator = false
+		end
+		local pos = u74(u5.currentRepairGenerator)
+		if pos ~= Vector3.new(0, 0, 0) then u77(pos) end
+		if not t1.promptActivated then u78(u5.currentRepairGenerator); t1.promptActivated = true end
+		u79(u5.currentRepairGenerator)
+		if u72(u5.currentRepairGenerator) >= 100 then
+			u5.currentRepairGenerator = nil
+			t1.promptActivated = false
+			t1.teleportedToGenerator = false
+		end
+		task.wait(t3.repairCheckInterval)
+	end)
+end
+local function uDoGensStop()
+	if t1.autoDoGensActive then
+		t1.autoDoGensActive = false
+		if t4.autoDoGensConnection then t4.autoDoGensConnection:Disconnect(); t4.autoDoGensConnection = nil end
+		u5.currentRepairGenerator = nil
+		t1.promptActivated = false	end
+end
+local function uDoGensStart()
+	if t1.autoDoGensActive then return end
+	t1.autoDoGensActive = true
+	u5.currentRepairGenerator = nil
+	t4.autoDoGensConnection = RunService.Heartbeat:Connect(function()
+		if not t1.autoDoGensActive then return end
+		if not u70() then uDoGensStop(); return end
+		local me = u75()
+		if not me then return end
+		local hrp = me:FindFirstChild("HumanoidRootPart")
+		if not hrp then return end
+		if u5.currentRepairGenerator and (not u5.currentRepairGenerator.Parent or u72(u5.currentRepairGenerator) >= 100) then
+			u5.currentRepairGenerator = nil
+			t1.promptActivated = false
+		end
+		if not u5.currentRepairGenerator then
+			local gens = u73()
+			local best, bestDist = nil, math.huge
+			for _, g in pairs(gens) do
+				local gp = u74(g)
+				if gp ~= Vector3.new(0, 0, 0) then
+					local d = (gp - hrp.Position).Magnitude
+					if d < bestDist then bestDist = d; best = g end
+				end
+			end
+			u5.currentRepairGenerator = best
+			if not u5.currentRepairGenerator then uDoGensStop(); return end
+			t1.promptActivated = false
+		end
+		local genPos = u74(u5.currentRepairGenerator)
+		if genPos == Vector3.new(0, 0, 0) then return end
+		local dist = (genPos - hrp.Position).Magnitude
+		if dist > 4 then
+			me.Humanoid:MoveTo(genPos)
+		else
+			me.Humanoid:MoveTo(hrp.Position)
+			if not t1.promptActivated then u78(u5.currentRepairGenerator); t1.promptActivated = true end
+			u79(u5.currentRepairGenerator)
+		end
+		if u72(u5.currentRepairGenerator) >= 100 then
+			u5.currentRepairGenerator = nil
+			t1.promptActivated = false
+		end
+		task.wait(0.25)
+	end)
+end
+local function u82() return tick() - t2.lastFriedChickenTime >= t3.friedChickenCooldown end
+local function u83()
+	if not u82() then return false end
+	if not pcall(function()
+		game.ReplicatedStorage.Modules.Network.RemoteEvent:FireServer("UseActorAbility", "FriedChicken")
+	end) then return false end
+	t2.lastFriedChickenTime = tick()
+	return true
+end
+local function u84()
+	if t1.autoFriedChicken then return end
+	t1.autoFriedChicken = true
+	t4.friedChickenConnection = RunService.Heartbeat:Connect(function()
+		if not t1.autoFriedChicken then return end
+		local me = u75()
+		if not me then return end
+		local h = me:FindFirstChildOfClass("Humanoid")
+		if h and h.Health > 0 and h.Health / h.MaxHealth * 100 <= t3.friedChickenThreshold and u82() then u83() end
+	end)
+end
+local function u85()
+	if t1.autoFriedChicken then
+		t1.autoFriedChicken = false
+		if t4.friedChickenConnection then t4.friedChickenConnection:Disconnect(); t4.friedChickenConnection = nil end
+	end
+end
+local function u86() local me = u75(); return me and me.Name == "Chance" end
+local function u87() return tick() - t2.lastCoinFlipTime >= t3.coinFlipCooldown end
+local function u88()
+	if not u87() then return false end
+	if not pcall(function()
+		game.ReplicatedStorage.Modules.Network.RemoteEvent:FireServer("UseActorAbility", "CoinFlip")
+	end) then return false end
+	t2.lastCoinFlipTime = tick()
+	return true
+end
+local function u89()
+	if t1.autoCoinFlip then return end
+	t1.autoCoinFlip = true
+	t4.coinFlipConnection = RunService.Heartbeat:Connect(function()
+		if not t1.autoCoinFlip then return end
+		if u70() and u86() and u87() then u88() end
+	end)
+end
+local function u90()
+	if t1.autoCoinFlip then
+		t1.autoCoinFlip = false
+		if t4.coinFlipConnection then t4.coinFlipConnection:Disconnect(); t4.coinFlipConnection = nil end
+	end
+end
+local function u91() return tick() - t2.lastCloneTime >= t3.cloneCooldown end
+local function u92()
+	if not u91() then return false end
+	if not pcall(function()
+		game.ReplicatedStorage.Modules.Network.RemoteEvent:FireServer("UseActorAbility", "Clone")
+	end) then return false end
+	t2.lastCloneTime = tick()
+	return true
+end
+local function u93()
+	if t1.autoClone then return end
+	t1.autoClone = true
+	local me = u75()
+	if me then
+		local h = me:FindFirstChildOfClass("Humanoid")
+		if h then u5.lastHealth = h.Health end
+	end
+	t4.cloneConnection = RunService.Heartbeat:Connect(function()
+		if not t1.autoClone then return end
+		if u70() then
+			local me2 = u75()
+			if me2 then
+				local h = me2:FindFirstChildOfClass("Humanoid")
+				if h and h.Health > 0 then
+					if h.Health < u5.lastHealth and u91() then u92() end
+					u5.lastHealth = h.Health
+				end
+			end
+		end
+	end)
+end
+local function u94()
+	if t1.autoClone then
+		t1.autoClone = false
+		if t4.cloneConnection then t4.cloneConnection:Disconnect(); t4.cloneConnection = nil end
+	end
+end
+local t18 = { "rbxassetid://94067586317868", "rbxassetid://107925328038675" }
+local function u96()
+	if t4.autoBlockConnection then return end
+	t4.autoBlockConnection = RunService.Heartbeat:Connect(function()
+		if not t1.autoBlockActive or not u5.isSurvivor or not u5.killerModel then return end
+		local char = Players.LocalPlayer.Character
+		local hrp = char and char:FindFirstChild("HumanoidRootPart")
+		local kRoot = u5.killerModel:FindFirstChild("HumanoidRootPart")
+		if not hrp or not kRoot then return end
+		if (hrp.Position - kRoot.Position).Magnitude > 15 then return end
+		local h = u5.killerModel:FindFirstChildOfClass("Humanoid")
+		local a = h and h:FindFirstChildOfClass("Animator")
+		if not a then return end
+		for _, v in pairs(a:GetPlayingAnimationTracks()) do
+			if table.find(t18, v.Animation.AnimationId) and u31("Block") then
+				game.ReplicatedStorage.Modules.Network.RemoteEvent:FireServer("UseActorAbility", "Block")
+				return
+			end
+		end
+	end)
+end
+local function u97()
+	if t4.autoBlockConnection then t4.autoBlockConnection:Disconnect(); t4.autoBlockConnection = nil end
+end
+local function u98(p65)
+	local out = {}
+	local ig = workspace.Map and workspace.Map:FindFirstChild("Ingame")
+	if not ig then return out end
+	local roots = { ig, ig:FindFirstChild("Map"), workspace.Map }
+	for _, v in pairs(roots) do
+		if v then
+			local direct = v:FindFirstChild(p65)
+			if direct and direct:FindFirstChild("ItemRoot") then table.insert(out, direct) end
+			for _, d in pairs(v:GetDescendants()) do
+				if p65 == d.Name and d:FindFirstChild("ItemRoot") then table.insert(out, d) end
+			end
+		end
+	end
+	return out
+end
+local function u99(p66)
+	local r = p66:FindFirstChild("ItemRoot")
+	if not r or not r:IsA("BasePart") then
+		for _, d in pairs(p66:GetDescendants()) do
+			if d:IsA("BasePart") then return d.Position end
+		end
+		return nil
+	end
+	return r.Position
+end
+local function u100(p67)
+	if not p67 then return false end
+	local r = p67:FindFirstChild("ItemRoot")
+	if not r then return false end
+	local prompt = r:FindFirstChildOfClass("ProximityPrompt") or p67:FindFirstChildOfClass("ProximityPrompt")
+	if not prompt then return false end
+	pcall(fireproximityprompt, prompt)
+	return true
+end
+local function u101(p68)
+	local pos = u99(p68)
+	if not pos then return false end
+	local me = u75()
+	local hrp = me and me:FindFirstChild("HumanoidRootPart")
+	if not hrp then return false end
+	hrp.CFrame = CFrame.new(pos + Vector3.new(0, 3, 0))
+	return true
+end
+local function u102(p69)
+	if not p69 or not p69.Parent then return false end
+	if not u101(p69) then return false end
+	task.wait(0.5)
+	return u100(p69)
+end
+local function u103()
+	if t1.autoGetItemsActive then return end
+	t1.autoGetItemsActive = true
+	t4.autoGetItemsConnection = RunService.Heartbeat:Connect(function()
+		if not t1.autoGetItemsActive then return end
+		if not u70() then u104(); return end
+		local all = {}
+		for _, n in pairs({ "Medkit", "BloxyCola" }) do
+			for _, v in pairs(u98(n)) do table.insert(all, v) end
+		end
+		if #all == 0 then u104(); return end
+		for _, v in pairs(all) do
+			if t1.autoGetItemsActive and v and v.Parent then u102(v); task.wait(t3.itemPickupCooldown) end
+		end
+	end)
+end
+local function u104()
+	if t1.autoGetItemsActive then
+		t1.autoGetItemsActive = false
+		if t4.autoGetItemsConnection then t4.autoGetItemsConnection:Disconnect(); t4.autoGetItemsConnection = nil end
+	end
+end
+local function u105()
+	if t1.autoGetMedkitActive then return end
+	t1.autoGetMedkitActive = true
+	t4.autoGetMedkitConnection = RunService.Heartbeat:Connect(function()
+		if not t1.autoGetMedkitActive then return end
+		if not u70() then u106(); return end
+		local list = u98("Medkit")
+		if #list == 0 then u106(); return end
+		for _, v in pairs(list) do
+			if t1.autoGetMedkitActive and v and v.Parent then u102(v); return end
+		end
+	end)
+end
+local function u106()
+	if t1.autoGetMedkitActive then
+		t1.autoGetMedkitActive = false
+		if t4.autoGetMedkitConnection then t4.autoGetMedkitConnection:Disconnect(); t4.autoGetMedkitConnection = nil end
+	end
+end
+local function u107()
+	if t1.autoGetBloxyColaActive then return end
+	t1.autoGetBloxyColaActive = true
+	t4.autoGetBloxyColaConnection = RunService.Heartbeat:Connect(function()
+		if not t1.autoGetBloxyColaActive then return end
+		if not u70() then u108(); return end
+		local list = u98("BloxyCola")
+		if #list == 0 then u108(); return end
+		for _, v in pairs(list) do
+			if t1.autoGetBloxyColaActive and v and v.Parent then u102(v); return end
+		end
+	end)
+end
+local function u108()
+	if t1.autoGetBloxyColaActive then
+		t1.autoGetBloxyColaActive = false
+		if t4.autoGetBloxyColaConnection then t4.autoGetBloxyColaConnection:Disconnect(); t4.autoGetBloxyColaConnection = nil end
+	end
+end
+local function u109()
+	if t1.itemAuraActive then return end
+	t1.itemAuraActive = true
+	t4.itemAuraConnection = RunService.Heartbeat:Connect(function()
+		if not t1.itemAuraActive then return end
+		if not u70() then u110(); return end
+		local me = u75()
+		local hrp = me and me:FindFirstChild("HumanoidRootPart")
+		if not hrp then return end
+		local items = {}
+		for _, n in pairs({ "Medkit", "BloxyCola" }) do
+			for _, v in pairs(u98(n)) do table.insert(items, { item = v, pos = u99(v) }) end
+		end
+		for _, v in pairs(items) do
+			if v.pos and (v.pos - hrp.Position).Magnitude <= t3.itemAuraRange then
+				u100(v.item)
+				task.wait(0.1)
+			end
+		end
+		task.wait(0.5)
+	end)
+end
+local function u110()
+	if t1.itemAuraActive then
+		t1.itemAuraActive = false
+		if t4.itemAuraConnection then t4.itemAuraConnection:Disconnect(); t4.itemAuraConnection = nil end
+	end
+end
+local function u111()
+	local char = Players.LocalPlayer.Character
+	local hrp = char and char:FindFirstChild("HumanoidRootPart")
+	if not hrp then return nil end
+	local s = workspace.Players:FindFirstChild("Survivors")
+	if not s then return nil end
+	local best, huge = nil, math.huge
+	for _, c in pairs(s:GetChildren()) do
+		if c:IsA("Model") and c:FindFirstChild("Humanoid") and c.Humanoid.Health > 0 then
+			local r = c:FindFirstChild("HumanoidRootPart")
+			if r then
+				local m = (r.Position - hrp.Position).Magnitude
+				if m < huge then huge = m; best = c end
+			end
+		end
+	end
+	return best
+end
+local function u112(p87)
+	if not p87 or not p87:FindFirstChild("HumanoidRootPart") then return end
+	local char = Players.LocalPlayer.Character
+	local hrp = char and char:FindFirstChild("HumanoidRootPart")
+	if not hrp then return end
+	local t = p87.HumanoidRootPart
+	if t1.killAllTeleport then
+		local lv = t.CFrame.LookVector
+		local v = t.Position - lv * 2.7 + Vector3.new(0, 1.5, 0)
+		hrp.CFrame = CFrame.lookAt(v, t.Position)
+	else
+		char.Humanoid:MoveTo(t.Position)
+	end
+end
+local function u115()
+	local char = Players.LocalPlayer.Character
+	local ability = "Slash"
+	if char then
+		if char.Name == "Noli" then ability = "Stab"
+		elseif char.Name == "c001kidd" then ability = "Punch" end
+	end
+	game.ReplicatedStorage.Modules.Network.RemoteEvent:FireServer("UseActorAbility", ability)
+end
+local function u121()
+	if t1.killAllActive then return end
+	t1.killAllActive = true
+	t4.killAllConnection = RunService.Heartbeat:Connect(function()
+		if not t1.killAllActive then return end
+		if u5.currentTarget and (not u5.currentTarget.Parent or not u5.currentTarget:FindFirstChild("Humanoid") or u5.currentTarget.Humanoid.Health <= 0) then
+			u5.currentTarget = nil
+		end
+		if not u5.currentTarget then u5.currentTarget = u111() end
+		if not u5.currentTarget then return end
+		u112(u5.currentTarget)
+		local char = Players.LocalPlayer.Character
+		if char and char:FindFirstChild("HumanoidRootPart") and u5.currentTarget:FindFirstChild("HumanoidRootPart") then
+			local m = (u5.currentTarget.HumanoidRootPart.Position - char.HumanoidRootPart.Position).Magnitude
+			if t1.killAllTeleport or m < 15 then u115() end
+		end
+		task.wait(0.3)
+	end)
+end
+local function u122()
+	if t1.killAllActive then
+		t1.killAllActive = false
+		if t4.killAllConnection then t4.killAllConnection:Disconnect(); t4.killAllConnection = nil end
+		u5.currentTarget = nil
+	end
+end
+local function u123()
+	local char = Players.LocalPlayer.Character
+	local hrp = char and char:FindFirstChild("HumanoidRootPart")
+	if not hrp then return nil, math.huge end
+	local s = workspace.Players:FindFirstChild("Survivors")
+	if not s then return nil, math.huge end
+	local best, huge = nil, math.huge
+	for _, c in pairs(s:GetChildren()) do
+		local r = c:FindFirstChild("HumanoidRootPart")
+		if r then
+			local m = (hrp.Position - r.Position).Magnitude
+			if m < huge then huge = m; best = c end
+		end
+	end
+	return best, huge
+end
+local function u124(ability)
+	if tick() - t2.lastAuraUse < t3.auraCooldown then return false end
+	game.ReplicatedStorage.Modules.Network.RemoteEvent:FireServer("UseActorAbility", ability)
+	t2.lastAuraUse = tick()
+	return true
+end
+local function u125()
+	if t4.auraConnection then return end
+	t4.auraConnection = RunService.Heartbeat:Connect(function()
+		if not t1.killerAuraActive or not u5.isKiller then return end
+		local t, d = u123()
+		if t and d <= t3.auraRange then
+			local char = Players.LocalPlayer.Character
+			local ability = "Slash"
+			if char then
+				if char.Name == "Noli" then ability = "Stab"
+				elseif char.Name == "c001kidd" then ability = "Punch"
+				elseif char.Name == "Guest1337" then ability = "Punch" end
+			end
+			u124(ability)
+		end
+	end)
+end
+local function u127()
+	if t4.auraConnection then t4.auraConnection:Disconnect(); t4.auraConnection = nil end
+end
+
+-- ===== UI: info / socials =====
+v21:Section({ Title = u16("GAME INFO", t10.Primary, t10.Text) })
+local u36 = v21:Paragraph({ Title = u16("FPS: --", t10.Primary, t10.Text), Desc = "Loading...", Image = "activity", ImageSize = 20, Color = "White" })
+local u37 = v21:Paragraph({ Title = u16("PING: --", t10.Primary, t10.Text), Desc = "Loading...", Image = "signal", ImageSize = 20, Color = "White" })
+local u38 = v21:Paragraph({ Title = u16("PLAYERS: --", t10.Primary, t10.Text), Desc = "Loading...", Image = "users", ImageSize = 20, Color = "White" })
+local u39 = v21:Paragraph({ Title = u16("GAME: --", t10.Primary, t10.Text), Desc = "Loading...", Image = "gamepad", ImageSize = 20, Color = "White" })
+local function u40()
+	local fps = u35() or 0
+	u36:SetTitle(u16("FPS: " .. fps, t10.Primary, fps > 60 and t10.Accent or t10.Danger))
+	u37:SetTitle(u16("PING: " .. math.random(30, 120) .. "ms", t10.Primary, t10.Text))
+	u38:SetTitle(u16("PLAYERS: " .. #Players:GetPlayers() .. "/" .. Players.MaxPlayers, t10.Primary, t10.Text))
+	pcall(function() u39:SetTitle(u16(game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name, t10.Primary, t10.Text)) end)
+end
+u40()
+spawn(function() while wait(1) do u40() end end)
+v21:Code({ Title = "Version: 1.2.0", Code = " outlaw.dev merged build\n+ Category A/B/C from Naiko Forsaken Plus\n+ ESP lag fixes\n+ Auto Farm / Auto Do Generators\n+ Plugins, Update banner, Mod detection\n" })
+
+v22:Button({ Title = u16("outlaw.dev", t10.Primary, t10.Accent), Desc = "Copy site link", Icon = "copy", Callback = function()
+	setclipboard("https://outlaw.dev"); u1:Notify({ Title = "Link Copied", Content = "outlaw.dev copied", Duration = 2 })
+end })
+v22:Button({ Title = u16("Telegram", t10.Primary, t10.Accent), Desc = "Copy link", Icon = "copy", Callback = function()
+	setclipboard("https://t.me/outlawdev"); u1:Notify({ Title = "Link Copied", Content = "Telegram link copied", Duration = 2 })
+end })
+
+-- ===== UI: character =====
+v23:Section({ Title = u16("MOVEMENT", t10.Primary, t10.Text) })
+v23:Toggle({ Title = u16("Noclip", t10.Primary, t10.Text), Value = false, Callback = function(p6)
+	t1.noclip = p6
+	if not p6 then
+		if _G.NoclipLoop then _G.NoclipLoop:Disconnect(); _G.NoclipLoop = nil end
+	else
+		_G.NoclipLoop = RunService.Stepped:Connect(function()
+			local char = Players.LocalPlayer.Character
+			if char then
+				for _, d in pairs(char:GetDescendants()) do
+					if d:IsA("BasePart") then d.CanCollide = false end
+				end
+			end
+		end)
+	end
+end })
+v23:Toggle({ Title = u16("Infinite Jump", t10.Primary, t10.Text), Value = false, Callback = function(p7)
+	t1.infiniteJump = p7
+	if not p7 then
+		if _G.InfiniteJumpConnection then _G.InfiniteJumpConnection:Disconnect(); _G.InfiniteJumpConnection = nil end
+	else
+		_G.InfiniteJumpConnection = game:GetService("UserInputService").JumpRequest:Connect(function()
+			local hum = Players.LocalPlayer.Character and Players.LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+			if hum then hum:ChangeState("Jumping") end
+		end)
+	end
+end })
+v23:Toggle({ Title = u16("Fly", t10.Primary, t10.Text), Value = false, Callback = function(p8) if not p8 then u48() else u47() end end })
+v23:Slider({ Title = u16("Fly Speed", t10.Primary, t10.Text), Value = { Min = 5, Max = 150, Default = t3.flySpeed }, Callback = function(v) t3.flySpeed = v end })
+v23:Toggle({ Title = u16("Infinite Stamina", t10.Primary, t10.Text), Value = false, Icon = "zap", Callback = function(v) u49(v) end })
+v23:Toggle({ Title = u16("Enable Jumping", t10.Primary, t10.Text), Value = false, Icon = "arrow-up", Callback = function(v) uEnableJumping(v) end })
+v23:Section({ Title = u16("ANTI", t10.Primary, t10.Text) })
+v23:Toggle({ Title = u16("Anti Stun", t10.Primary, t10.Text), Value = false, Icon = "zap-off", Callback = function(v) t1.antiStunActive = v; if not v then u51() else u50() end end })
+v23:Toggle({ Title = u16("Anti Slow", t10.Primary, t10.Text), Value = false, Icon = "gauge", Callback = function(v) t1.antiSlowActive = v; if not v then u53() else u52() end end })
+v23:Toggle({ Title = u16("Anti Slowness", t10.Primary, t10.Text), Value = false, Icon = "gauge", Callback = function(v) uAntiSlowness(v) end })
+v23:Section({ Title = u16("EXPLOIT", t10.Primary, t10.Text) })
+v23:Toggle({ Title = u16("Invincible", t10.Primary, t10.Text), Value = false, Icon = "shield", Callback = function(v) uInvincible(v) end })
+v23:Toggle({ Title = u16("Better Void Rush", t10.Primary, t10.Text), Value = false, Icon = "zap", Callback = function(v) uVoidRush(v) end })
+v23:Dropdown({ Title = u16("Animation Changer", t10.Primary, t10.Text), Values = { "Original", "Default Roblox" }, Value = "Original", Callback = function(v) uAnimChanger(v) end })
+v23:Dropdown({ Title = u16("Stamina Preset", t10.Primary, t10.Text), Values = { "Original", "Realistic", "Semi-Realistic", "Infinite" }, Value = "Original", Callback = function(v) uStaminaPreset(v) end })
+v23:Toggle({ Title = u16("Controllable Coolkidd Dash", t10.Primary, t10.Text), Value = false, Icon = "move", Callback = function(v) uControlDash(v) end })
+v23:Section({ Title = u16("CAMERA", t10.Primary, t10.Text) })
+v23:Slider({ Title = u16("Extended FOV", t10.Primary, t10.Text), Value = { Min = 10, Max = 120, Default = 70, Step = 5 }, Callback = function(v) uExtFOV(v) end })
+v23:Slider({ Title = u16("Extended Zoom", t10.Primary, t10.Text), Value = { Min = 0, Max = 100, Default = 10, Step = 5 }, Callback = function(v) uExtZoom(v) end })
+
+-- ===== UI: esp =====
+v24:Section({ Title = u16("HIGHLIGHT", t10.Primary, t10.Text) })
+v24:Toggle({ Title = u16("Survivors Highlight", t10.Primary, t10.Text), Value = false, Icon = "user", Callback = function(v) u8.SurvivorsHighlight = v; u62() end })
+v24:Toggle({ Title = u16("Killer Highlight", t10.Primary, t10.Text), Value = false, Icon = "skull", Callback = function(v) u8.KillerHighlight = v; u62() end })
+v24:Toggle({ Title = u16("Items Highlight", t10.Primary, t10.Text), Value = false, Icon = "package", Callback = function(v) u8.ItemsHighlight = v; u62() end })
+v24:Toggle({ Title = u16("Generators Highlight", t10.Primary, t10.Text), Value = false, Icon = "zap", Callback = function(v) u8.GeneratorsHighlight = v; u62() end })
+v24:Section({ Title = u16("NAME", t10.Primary, t10.Text) })
+v24:Toggle({ Title = u16("Survivors Name", t10.Primary, t10.Text), Value = false, Icon = "user", Callback = function(v) u8.SurvivorsNameESP = v; u62() end })
+v24:Toggle({ Title = u16("Killer Name", t10.Primary, t10.Text), Value = false, Icon = "skull", Callback = function(v) u8.KillerNameESP = v; u62() end })
+v24:Toggle({ Title = u16("Items Name", t10.Primary, t10.Text), Value = false, Icon = "package", Callback = function(v) u8.ItemsNameESP = v; u62() end })
+v24:Toggle({ Title = u16("Generators Name", t10.Primary, t10.Text), Value = false, Icon = "zap", Callback = function(v) u8.GeneratorsNameESP = v; u62() end })
+v24:Section({ Title = u16("DISTANCE", t10.Primary, t10.Text) })
+v24:Toggle({ Title = u16("Survivors Distance", t10.Primary, t10.Text), Value = false, Icon = "user", Callback = function(v) u8.SurvivorsDistance = v; u62() end })
+v24:Toggle({ Title = u16("Killer Distance", t10.Primary, t10.Text), Value = false, Icon = "skull", Callback = function(v) u8.KillerDistance = v; u62() end })
+v24:Toggle({ Title = u16("Items Distance", t10.Primary, t10.Text), Value = false, Icon = "package", Callback = function(v) u8.ItemsDistance = v; u62() end })
+v24:Toggle({ Title = u16("Generators Distance", t10.Primary, t10.Text), Value = false, Icon = "zap", Callback = function(v) u8.GeneratorsDistance = v; u62() end })
+v24:Button({ Title = u16("Refresh ESP", t10.Primary, t10.Accent), Icon = "refresh-cw", Callback = u62 })
+v24:Button({ Title = u16("Clear All ESP", t10.Primary, t10.Accent), Icon = "trash-2", Callback = cleanupAllEsp })
+u64()
+
+-- ===== UI: aimbot =====
+v25:Section({ Title = u16("SURVIVOR AIMBOT", t10.Primary, t10.Text) })
+for _, name in ipairs({ "Chance", "Taph", "Dusekkar", "Guest1337", "TwoTime", "Elliot", "Shedletsky" }) do
+	v25:Toggle({ Title = u16(name .. " Aimbot", t10.Primary, t10.Text), Value = false, Icon = "crosshair", Callback = function(v) u68(name, v) end })
+end
+v25:Section({ Title = u16("KILLER AIMBOT", t10.Primary, t10.Text) })
+for _, name in ipairs({ "Noli", "OneXOne", "C001kidd", "JohnDoe", "Slasher" }) do
+	v25:Toggle({ Title = u16(name .. " Aimbot", t10.Primary, t10.Text), Value = false, Icon = "crosshair", Callback = function(v) u68(name, v) end })
+end
+
+-- ===== UI: survivor =====
+v26:Section({ Title = u16("AUTO REPAIR", t10.Primary, t10.Text) })
+v26:Toggle({ Title = u16("Auto Farm Generators", t10.Primary, t10.Text), Value = false, Icon = "zap", Callback = function(v)
+	if not v then uFarmGensStop() else
+		if not u70() then u1:Notify({ Title = "outlaw.dev", Content = "Survivor only", Duration = 3 }); return false end
+		uDoGensStop(); uFarmGensStart()
+	end
+end })
+v26:Toggle({ Title = u16("Auto Do Generators", t10.Primary, t10.Text), Value = false, Icon = "settings", Callback = function(v)
+	if not v then uDoGensStop() else
+		if not u70() then u1:Notify({ Title = "outlaw.dev", Content = "Survivor only", Duration = 3 }); return false end
+		uFarmGensStop(); uDoGensStart()
+	end
+end })
+v26:Slider({ Title = u16("Repair Interval", t10.Primary, t10.Text), Value = { Min = 0.5, Max = 5, Default = 1 }, Callback = function(v) t3.repairCheckInterval = v end })
+v26:Toggle({ Title = u16("Override Grid Size", t10.Primary, t10.Text), Value = false, Icon = "grid", Callback = function(v) uGridOverride(v) end })
+v26:Slider({ Title = u16("Grid Size", t10.Primary, t10.Text), Value = { Min = 4, Max = 12, Default = 6, Step = 1 }, Callback = function(v) t1.gridSize = v end })
+v26:Section({ Title = u16("SKILLS", t10.Primary, t10.Text) })
+v26:Toggle({ Title = u16("Auto Fried Chicken", t10.Primary, t10.Text), Value = false, Callback = function(v) if not v then u85() else if u70() then u84() end end end })
+v26:Slider({ Title = u16("HP Threshold", t10.Primary, t10.Text), Value = { Min = 10, Max = 90, Default = 50 }, Callback = function(v) t3.friedChickenThreshold = v end })
+v26:Toggle({ Title = u16("Auto Coin Flip", t10.Primary, t10.Text), Value = false, Callback = function(v) if not v then u90() else if u70() then u89() end end end })
+v26:Toggle({ Title = u16("Auto Clone", t10.Primary, t10.Text), Value = false, Callback = function(v) if not v then u94() else if u70() then u93() end end end })
+v26:Toggle({ Title = u16("Auto Block", t10.Primary, t10.Text), Value = false, Icon = "shield", Callback = function(v)
+	t1.autoBlockActive = v
+	if not v then u97() elseif u5.isSurvivor then u96() end
+end })
+v26:Toggle({ Title = u16("Guest1337 Auto Block", t10.Primary, t10.Text), Value = false, Icon = "shield", Callback = function(v) uAutoBlockGuest(v) end })
+v26:Toggle({ Title = u16("Guest1337 Auto Punch", t10.Primary, t10.Text), Value = false, Callback = function(v) if not v then uAutoPunchStop() else uAutoPunchStart() end end })
+v26:Toggle({ Title = u16("Auto Escape (Nosferatu)", t10.Primary, t10.Text), Value = false, Callback = function(v) if not v then uAutoEscapeStop() else uAutoEscapeStart() end end })
+v26:Toggle({ Title = u16("Auto Disarm (Azure)", t10.Primary, t10.Text), Value = false, Callback = function(v) uAutoDisarm(v) end })
+v26:Section({ Title = u16("ITEMS", t10.Primary, t10.Text) })
+v26:Toggle({ Title = u16("Auto Get Items", t10.Primary, t10.Text), Value = false, Callback = function(v) if not v then u104() else if u70() then u103() end end end })
+v26:Toggle({ Title = u16("Auto Get Medkit", t10.Primary, t10.Text), Value = false, Callback = function(v) if not v then u106() else if u70() then u105() end end end })
+v26:Toggle({ Title = u16("Auto Get Bloxy Cola", t10.Primary, t10.Text), Value = false, Callback = function(v) if not v then u108() else if u70() then u107() end end end })
+v26:Toggle({ Title = u16("Item Aura", t10.Primary, t10.Text), Value = false, Callback = function(v) if not v then u110() else if u70() then u109() end end end })
+v26:Slider({ Title = u16("Item Aura Range", t10.Primary, t10.Text), Value = { Min = 1, Max = 15, Default = 5 }, Callback = function(v) t3.itemAuraRange = v end })
+v26:Toggle({ Title = u16("Auto Pickup", t10.Primary, t10.Text), Value = false, Callback = function(v) if not v then uPickupStop() else uPickupStart() end end })
+
+-- ===== UI: killer =====
+v27:Section({ Title = u16("KILL ALL", t10.Primary, t10.Text) })
+v27:Toggle({ Title = u16("Kill All", t10.Primary, t10.Text), Value = false, Icon = "skull", Callback = function(v) if not v then u122() else u121() end end })
+v27:Toggle({ Title = u16("Teleport Mode", t10.Primary, t10.Text), Value = false, Callback = function(v) t1.killAllTeleport = v end })
+v27:Button({ Title = u16("Force New Target", t10.Primary, t10.Accent), Icon = "refresh-cw", Callback = function() u5.currentTarget = u111() end })
+v27:Section({ Title = u16("AURA", t10.Primary, t10.Text) })
+v27:Toggle({ Title = u16("Killer Aura", t10.Primary, t10.Text), Value = false, Icon = "target", Callback = function(v) t1.killerAuraActive = v; if not v then u127() else u125() end end })
+v27:Slider({ Title = u16("Aura Range", t10.Primary, t10.Text), Value = { Min = 5, Max = 30, Default = 15 }, Callback = function(v) t3.auraRange = v end })
+v27:Section({ Title = u16("HOST (PRIVATE SERVER)", t10.Primary, t10.Text) })
+v27:Dropdown({ Title = u16("Host Target", t10.Primary, t10.Text), Values = { "None" }, Value = "None", Callback = function(v) t1.hostTargetPlayer = v end })
+v27:Toggle({ Title = u16("Crash Target", t10.Primary, t10.Text), Value = false, Callback = function(v) uHostCrash(v) end })
+v27:Toggle({ Title = u16("Sky Glitch", t10.Primary, t10.Text), Value = false, Callback = function(v) uHostSky(v) end })
+v27:Toggle({ Title = u16("Instant Kill", t10.Primary, t10.Text), Value = false, Callback = function(v) uHostInstaKill(v) end })
+v27:Toggle({ Title = u16("Disable Damage", t10.Primary, t10.Text), Value = false, Callback = function(v) uHostNoDamage(v) end })
+v27:Toggle({ Title = u16("Disable Cooldown", t10.Primary, t10.Text), Value = false, Callback = function(v) uHostNoCooldown(v) end })
+
+-- ===== UI: misc =====
+v30:Section({ Title = u16("GAME EFFECTS", t10.Primary, t10.Text) })
+v30:Toggle({ Title = u16("Disable JD Trails", t10.Primary, t10.Text), Value = false, Callback = function(v) uJDTrails(v) end })
+v30:Toggle({ Title = u16("Disable JD Footprints", t10.Primary, t10.Text), Value = false, Callback = function(v) uJDFootprints(v) end })
+v30:Toggle({ Title = u16("Smaller Spike Collisions", t10.Primary, t10.Text), Value = false, Callback = function(v) uSmallerSpikes(v) end })
+v30:Toggle({ Title = u16("Disable Noli's NPC", t10.Primary, t10.Text), Value = false, Callback = function(v) uNoliNPC(v) end })
+v30:Toggle({ Title = u16("Disable 007n7's NPC", t10.Primary, t10.Text), Value = false, Callback = function(v) u007n7NPC(v) end })
+v30:Section({ Title = u16("UI EFFECTS", t10.Primary, t10.Text) })
+v30:Toggle({ Title = u16("Hide Injured UI", t10.Primary, t10.Text), Value = false, Callback = function(v) uHideInjury(v) end })
+v30:Toggle({ Title = u16("Disable Blindness", t10.Primary, t10.Text), Value = false, Callback = function(v) uDisableBlindness(v) end })
+v30:Toggle({ Title = u16("Show Chat In Round", t10.Primary, t10.Text), Value = false, Callback = function(v) uShowChat(v) end })
+v30:Toggle({ Title = u16("Show Privacy Info", t10.Primary, t10.Text), Value = false, Callback = function(v) uShowPrivacy(v) end })
+v30:Section({ Title = u16("PERFORMANCE", t10.Primary, t10.Text) })
+v30:Toggle({ Title = u16("Delete All Ragdolls", t10.Primary, t10.Text), Value = false, Callback = function(v) uDeleteRagdolls(v) end })
+v30:Button({ Title = u16("Rejoin Server", t10.Primary, t10.Accent), Icon = "refresh-cw", Callback = function()
+	local ts = game:GetService("TeleportService")
+	if workspace:GetAttribute("ServerType") == "VIP" then ts:Teleport(game.PlaceId)
+	else ts:TeleportToPlaceInstance(game.PlaceId, game.JobId, Players.LocalPlayer) end
+end })
+v30:Button({ Title = u16("Join Official Forsaken", t10.Primary, t10.Accent), Icon = "external-link", Callback = function()
+	game:GetService("ExperienceService"):LaunchExperience({ placeId = 18687417158 })
+end })
+
+-- ===== UI: settings =====
+v28:Section({ Title = u16("ESP VISUAL", t10.Primary, t10.Text) })
+v28:Slider({ Title = u16("ESP Text Size", t10.Primary, t10.Text), Value = { Min = 8, Max = 24, Default = 14 }, Callback = function(v) t3.espTextSize = v; u62() end })
+v28:Slider({ Title = u16("Highlight Transparency", t10.Primary, t10.Text), Value = { Min = 0, Max = 1, Default = 0.5, Step = 0.05 }, Callback = function(v) t3.highlightTransparency = v; u62() end })
+v28:Slider({ Title = u16("Highlight Outline", t10.Primary, t10.Text), Value = { Min = 0, Max = 1, Default = 0, Step = 0.05 }, Callback = function(v) t3.highlightOutlineTransparency = v; u62() end })
+
+-- ===== UI: server =====
+u29:Section({ Title = u16("SERVER", t10.Primary, t10.Text) })
+u29:Button({ Title = u16("Rejoin to Server", t10.Primary, t10.Accent), Icon = "refresh-cw", Callback = function()
+	pcall(function() game:GetService("TeleportService"):TeleportToPlaceInstance(game.PlaceId, game.JobId, Players.LocalPlayer) end)
+end })
+u29:Button({ Title = u16("Server Hop", t10.Primary, t10.Accent), Icon = "shuffle", Callback = function()
+	local id = (function()
+		local ok, res = pcall(function()
+			return HttpService:JSONDecode(game:HttpGet("https://games.roblox.com/v1/games/" .. game.PlaceId .. "/servers/Public?sortOrder=Asc&limit=100"))
+		end)
+		if ok and res and res.data then
+			local list = {}
+			for _, v in ipairs(res.data) do
+				if v.playing < v.maxPlayers and v.id ~= game.JobId then table.insert(list, v) end
+			end
+			if #list > 0 then return list[math.random(1, #list)].id end
+		end
+		return nil
+	end)()
+	if id then game:GetService("TeleportService"):TeleportToPlaceInstance(game.PlaceId, id, Players.LocalPlayer)
+	else u1:Notify({ Title = "Error", Content = "No servers", Duration = 5 }) end
+end })
+
+-- ===== Gap 3.1: plugin loader =====
+local PLUGIN_DIR = "outlawdev/plugins"
+task.spawn(function()
+	if not capOK("isfolder", "makefolder", "listfiles", "readfile", "setfenv") then
+		capWarn("Plugin Loader", { "isfolder", "makefolder", "listfiles", "readfile", "setfenv" })
+		return
+	end
+	pcall(function()
+		if not CAP.isfolder("outlawdev") then CAP.makefolder("outlawdev") end
+		if not CAP.isfolder(PLUGIN_DIR) then CAP.makefolder(PLUGIN_DIR) end
+	end)
+	local files = CAP.listfiles(PLUGIN_DIR)
+	if not files then return end
+	for _, path in ipairs(files) do
+		local ok, data = pcall(CAP.readfile, path)
+		if not ok or type(data) ~= "string" then goto continue end
+		if data:gsub("[\n ]", ""):sub(1, 7) ~= "return{" then
+			warn("[outlaw.dev] plugin rejected (must start with return{): " .. tostring(path))
+			goto continue
+		end
+		local chunk = loadstring(data)
+		if not chunk then goto continue end
+		local ok2, features = pcall(function()
+			CAP.setfenv(chunk, getfenv())
+			return chunk()
+		end)
+		if not ok2 or type(features) ~= "table" then goto continue end
+		for tabName, tabContents in pairs(features) do
+			if type(tabName) == "string" and type(tabContents) == "table" then
+				-- plugins append to existing tabs by name; new tabs skipped in this build
+				local tabMap = {
+					Automation = v26, Features = v23, Visuals = v24,
+					Miscellaneous = v30, Killer = v27, Survivor = v26,
+				}
+				local tab = tabMap[tabName]
+				if not tab then goto nextTab end
+				for featName, featData in pairs(tabContents) do
+					if featName == "TabAttributes" then goto nextFeat end
+					if type(featData) ~= "table" then goto nextFeat end
+					if featData.InstanceType == "BoolValue" then
+						tab:Toggle({
+							Title = tostring(featData.DisplayTitle or featName),
+							Desc = tostring(featData.DisplayDescription or ""),
+							Value = featData.DefaultInstanceValue == true,
+							Callback = function(state)
+								if type(featData.ScriptFunction) == "function" then
+									pcall(featData.ScriptFunction, featData, state)
+								end
+							end,
+						})
+					elseif featData.InstanceType == "NumberValue" then
+						local ed = featData.ExtraData or {}
+						tab:Slider({
+							Title = tostring(featData.DisplayTitle or featName),
+							Desc = tostring(featData.DisplayDescription or ""),
+							Value = { Min = ed.MinValue or 0, Max = ed.MaxValue or 100, Default = featData.DefaultInstanceValue or 0, Step = ed.Step or 1 },
+							Callback = function(v)
+								if type(featData.ScriptFunction) == "function" then
+									pcall(featData.ScriptFunction, featData, v)
+								end
+							end,
+						})
+					end
+					::nextFeat::
+				end
+			end
+			::nextTab::
+		end
+		u1:Notify({ Title = "outlaw.dev", Content = "Plugin loaded: " .. tostring(path), Duration = 4 })
+		::continue::
+	end
+end)
+
+-- ===== Gap 3.2: Rovalra update banner =====
+task.spawn(function()
+	local scriptVersion = "2026-10-04"
+	local ok, res = pcall(function()
+		return game:HttpGet("https://apis.rovalra.com/v1/games/history?place_id=18687417158")
+	end)
+	if not ok or not res then return end
+	local dec = pcall(function() return HttpService:JSONDecode(tostring(res)) end)
+	if not dec then return end
+	local ok2, data = pcall(function() return HttpService:JSONDecode(tostring(res)) end)
+	if not ok2 or type(data) ~= "table" then return end
+	local hist = data.history and data.history[1]
+	local gameVer = hist and hist.first_seen and hist.first_seen:sub(1, 10)
+	if not gameVer then return end
+	local y1, m1, d1 = scriptVersion:match("(%d+)-(%d+)-(%d+)")
+	local y2, m2, d2 = gameVer:match("(%d+)-(%d+)-(%d+)")
+	if not (y1 and y2) then return end
+	local tScript = os.time({ year = y1, month = m1, day = d1 })
+	local tGame = os.time({ year = y2, month = m2, day = d2 })
+	local daysSinceScript = math.floor(math.abs(tScript - os.time()) / 86400)
+	local daysSinceGame = math.floor(math.abs(tGame - os.time()) / 86400)
+	if tScript < tGame and daysSinceScript > 1 then
+		v30:Section({ Title = u16("SCRIPT OUTDATED", t10.Danger, t10.Text) })
+		v30:Paragraph({
+			Title = u16("Game updated " .. daysSinceGame .. "d ago. Script tested " .. daysSinceScript .. "d ago.", t10.Danger, t10.Text),
+			Desc = "Some features may not work. Wait for a script update.",
+		})
+		u1:Notify({ Title = "outlaw.dev", Content = "Script is older than game build", Duration = 8 })
+	end
+end)
+
+-- ===== Gap 3.3: mod detection =====
+if game.CreatorType == Enum.CreatorType.Group then
+	local function checkMod(plr)
+		if t1.modDetected then return end
+		local ok, rank = pcall(function() return plr:GetRoleInGroupAsync(game.CreatorId) end)
+		if not ok or type(rank) ~= "string" then return end
+		if rank:lower():find("mod") or rank:lower():find("admin") then
+			t1.modDetected = true
+			u1:Notify({ Title = "outlaw.dev", Content = "Mod detected — features disabled", Duration = 10 })
+			-- force-stop every running loop
+			pcall(u122); pcall(u127); pcall(u80)
+			pcall(uFarmGensStop); pcall(uDoGensStop)
+			pcall(u104); pcall(u106); pcall(u108); pcall(u110)
+			pcall(uPickupStop); pcall(uAutoPunchStop); pcall(uAutoEscapeStop)
+			pcall(u97); pcall(uAutoBlockGuest, false)
+			pcall(u85); pcall(u90); pcall(u94)
+			pcall(uInvincible, false); pcall(uAnimChanger, "Original")
+			pcall(u48); pcall(uAntiSlowness, false); pcall(uEnableJumping, false)
+			pcall(u51); pcall(u53)
+			for name in pairs(t4.hostLoops) do t4.hostLoops[name] = nil end
+		end
+	end
+	for _, plr in ipairs(Players:GetPlayers()) do
+		if plr ~= Players.LocalPlayer then task.spawn(checkMod, plr) end
+	end
+	Players.PlayerAdded:Connect(function(plr) task.spawn(checkMod, plr) end)
+end
+
+-- ===== cleanup / lifecycle =====
+local function cleanupAll()
+	if t1.killAllActive then pcall(u122); t1.killAllActive = false end
+	if t1.killerAuraActive then pcall(u127); t1.killerAuraActive = false end
+	if t1.autoRepairActive then pcall(u80); t1.autoRepairActive = false end
+	if t1.autoFarmGensActive then pcall(uFarmGensStop) end
+	if t1.autoDoGensActive then pcall(uDoGensStop) end
+	if t1.autoGetItemsActive then pcall(u104) end
+	if t1.autoGetMedkitActive then pcall(u106) end
+	if t1.autoGetBloxyColaActive then pcall(u108) end
+	if t1.itemAuraActive then pcall(u110) end
+	if t1.autoPickupActive then pcall(uPickupStop) end
+	if t1.autoPunchActive then pcall(uAutoPunchStop) end
+	if t1.autoEscapeActive then pcall(uAutoEscapeStop) end
+	if t1.autoBlockActive then pcall(u97); t1.autoBlockActive = false end
+	if t1.autoBlockGuestActive then pcall(uAutoBlockGuest, false) end
+	if t1.autoFriedChicken then pcall(u85) end
+	if t1.autoCoinFlip then pcall(u90) end
+	if t1.autoClone then pcall(u94) end
+	if t1.invincibleActive then pcall(uInvincible, false) end
+	if t1.animChangerActive then pcall(uAnimChanger, "Original") end
+	if t1.flying then pcall(u48) end
+	if t1.antiSlownessActive then pcall(uAntiSlowness, false) end
+	if t1.enableJumpingActive then pcall(uEnableJumping, false) end
+	if t1.antiStunActive then pcall(u51); t1.antiStunActive = false end
+	if t1.antiSlowActive then pcall(u53); t1.antiSlowActive = false end
+	if t1.noclip and _G.NoclipLoop then _G.NoclipLoop:Disconnect(); _G.NoclipLoop = nil; t1.noclip = false end
+	if t1.infiniteJump and _G.InfiniteJumpConnection then _G.InfiniteJumpConnection:Disconnect(); _G.InfiniteJumpConnection = nil; t1.infiniteJump = false end
+	for _, v in pairs(t4.skillConnections) do if v then v:Disconnect() end end
+	t4.skillConnections = {}
+	pcall(cleanupAllEsp)
+end
+Players.LocalPlayer.CharacterAdded:Connect(function()
+	cleanupAll()
+	t2 = { lastAuraUse = 0, lastFriedChickenTime = 0, lastCloneTime = 0, lastCoinFlipTime = 0, lastEspUpdate = 0, teleportTime = 0 }
+	u5 = { autoGenDebounce = {}, repairDebounce = {}, skillCooldowns = {}, lastHealth = 0, currentTarget = nil, currentRepairGenerator = nil, killerModel = nil, isSurvivor = false, isKiller = false }
+	task.wait(1)
+	pcall(u30)
+	pcall(u62)
+end)
+Players.LocalPlayer.CharacterRemoving:Connect(cleanupAll)
+RunService.Heartbeat:Connect(function()
+	if not u70() then
+		if t1.autoGetItemsActive then u104() end
+		if t1.autoGetMedkitActive then u106() end
+		if t1.autoGetBloxyColaActive then u108() end
+		if t1.itemAuraActive then u110() end
+		if t1.autoRepairActive then u80() end
+		if t1.autoFarmGensActive then uFarmGensStop() end
+		if t1.autoDoGensActive then uDoGensStop() end
+		if t1.autoFriedChicken then u85() end
+		if t1.autoCoinFlip then u90() end
+		if t1.autoClone then u94() end
+	end
+	if (t1.killerAuraActive) and not u5.isKiller then
+		u127()
+		t1.killerAuraActive = false
+	end
+end)
+
+local u129 = v17.ConfigManager:CreateConfig("outlaw.dev")
+v28:Section({ Title = u16("CONFIG", t10.Primary, t10.Text) })
+v28:Button({ Title = u16("Save Config", t10.Primary, t10.Accent), Icon = "save", Callback = function() u129:Save(); u1:Notify({ Title = "Config", Content = "Saved", Duration = 3 }) end })
+v28:Button({ Title = u16("Load Config", t10.Primary, t10.Accent), Icon = "download", Callback = function() u129:Load(); u1:Notify({ Title = "Config", Content = "Loaded", Duration = 3 }) end })
+
+task.wait(1)
+u129:Load()
+u1:Notify({ Title = "outlaw.dev", Content = "Loaded. v1.2.0", Duration = 4 })
